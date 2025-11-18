@@ -15,5 +15,10 @@ wheels/
 *.png
 *.dxt
 
+# Backup and temporary files
+*.backup
+*.save
+nul
+
 # Virtual environments
 .venv
