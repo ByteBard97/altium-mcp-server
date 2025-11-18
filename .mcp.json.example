@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "altium": {
+      "command": "C:\\Users\\YOUR_USERNAME\\anaconda3\\envs\\altium-mcp-v2\\python.exe",
+      "args": ["server/main.py"],
+      "description": "Altium Designer MCP Server - AI-assisted PCB design with FastMCP 2.0",
+      "env": {
+        "PYTHONUNBUFFERED": "1"
+      }
+    }
+  }
+}

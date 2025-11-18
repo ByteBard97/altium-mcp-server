@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "altium": {
+      "command": "C:\\Users\\YOUR_USERNAME\\anaconda3\\envs\\altium-mcp-v2\\python.exe",
+      "args": [
+        "C:\\Users\\YOUR_USERNAME\\Desktop\\projects\\altium-mcp\\server\\main.py"
+      ],
+      "env": {
+        "PYTHONUNBUFFERED": "1"
+      }
+    }
+  }
+}
