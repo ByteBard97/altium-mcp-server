@@ -69,12 +69,9 @@ begin
             begin
                 Result := '{"success": false, "error": "' + E.Message + '"}';
             end;
-        // REMOVED DUPLICATE END: end;
+end;
     finally
         JsonBuilder.Free;
-    end;
-// REMOVED DUPLICATE END: end;
-
 {..............................................................................}
 { SaveProject - Save the currently open project                                }
 {..............................................................................}
@@ -127,12 +124,9 @@ begin
             begin
                 Result := '{"success": false, "error": "' + E.Message + '"}';
             end;
-        // REMOVED DUPLICATE END: end;
+end;
     finally
         JsonBuilder.Free;
-    end;
-// REMOVED DUPLICATE END: end;
-
 {..............................................................................}
 { GetProjectInfo - Get detailed information about the currently open project   }
 {..............................................................................}
@@ -181,8 +175,7 @@ begin
                     else
                         OtherCount := OtherCount + 1;
                 end;
-            // REMOVED DUPLICATE END: end;
-
+end;
             // Build response
             JsonBuilder.Add('{');
             JsonBuilder.Add('  "success": true,');
@@ -200,12 +193,9 @@ begin
             begin
                 Result := '{"success": false, "error": "' + E.Message + '"}';
             end;
-        // REMOVED DUPLICATE END: end;
+end;
     finally
         JsonBuilder.Free;
-    end;
-// REMOVED DUPLICATE END: end;
-
 {..............................................................................}
 { CloseProject - Close the currently open project                              }
 {..............................................................................}
@@ -251,10 +241,6 @@ begin
             begin
                 Result := '{"success": false, "error": "' + E.Message + '"}';
             end;
-        // REMOVED DUPLICATE END: end;
+end;
     finally
         JsonBuilder.Free;
-    end;
-// REMOVED DUPLICATE END: end;
-
-end;

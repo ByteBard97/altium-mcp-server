@@ -50,16 +50,13 @@ begin
                         );
                         Exit;
                     end;
-                // REMOVED DUPLICATE END: end;
-
+end;
                 CompInfo := CompInfoIter.NextComponent;
             end;
-        // REMOVED DUPLICATE END: end;
+end;
     except
         Result := nil;
     end;
-// REMOVED DUPLICATE END: end;
-
 {..............................................................................}
 { Helper function to copy primitives from library footprint to component      }
 {..............................................................................}
@@ -91,8 +88,6 @@ begin
     except
         Result := False;
     end;
-// REMOVED DUPLICATE END: end;
-
 {..............................................................................}
 { Place a single component on the PCB                                         }
 {..............................................................................}
@@ -184,9 +179,7 @@ begin
     except
         on E: Exception do
             Result := '{"success": false, "error": "' + E.Message + '"}';
-    end;
     JsonResult.Free;
-end;
 
 {..............................................................................}
 { Delete a component by designator                                            }
@@ -230,9 +223,6 @@ begin
     except
         on E: Exception do
             Result := '{"success": false, "error": "' + E.Message + '"}';
-    // REMOVED EXTRA END: end;
-// REMOVED DUPLICATE END: end;
-
 {..............................................................................}
 { Place an array of components in a grid pattern                              }
 {..............................................................................}
@@ -278,8 +268,7 @@ begin
 
                 ComponentCount := ComponentCount + 1;
             end;
-        // REMOVED DUPLICATE END: end;
-
+end;
         JsonBuilder.Add('  ]');
         JsonBuilder.Add('}');
 
@@ -287,8 +276,6 @@ begin
     finally
         JsonBuilder.Free;
     end;
-// REMOVED DUPLICATE END: end;
-
 {..............................................................................}
 { Align multiple components to a common edge                                  }
 {..............................................................................}
@@ -337,8 +324,7 @@ begin
                 Result := '{"success": false, "error": "Component not found: ' + Designator + '"}';
                 Exit;
             end;
-        // REMOVED DUPLICATE END: end;
-
+end;
         // Calculate alignment coordinate based on alignment type
         if Alignment = 'left' then
         begin
@@ -403,8 +389,6 @@ begin
     except
         on E: Exception do
             Result := '{"success": false, "error": "' + E.Message + '"}';
-    end;
 
     JsonResult.Free;
     DesignatorsList.Free;
-end;

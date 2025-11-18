@@ -78,12 +78,11 @@ begin
 
                                     LibCount := LibCount + 1;
                                 end;
-                            // REMOVED DUPLICATE END: end;
-                        // REMOVED DUPLICATE END: end;
-                    // REMOVED DUPLICATE END: end;
-                // REMOVED DUPLICATE END: end;
-            // REMOVED DUPLICATE END: end;
-
+end;
+end;
+end;
+end;
+end;
             JsonBuilder.Add('  ]');
             JsonBuilder.Add('}');
 
@@ -93,14 +92,10 @@ begin
             begin
                 Result := '{"success": false, "error": "' + E.Message + '"}';
             end;
-        // REMOVED DUPLICATE END: end;
+end;
     finally
         JsonBuilder.Free;
         AddedLibs.Free;
-    end;
-end;
-// REMOVED DUPLICATE END: end;
-
 {..............................................................................}
 { SearchComponents - Search for components across all loaded libraries         }
 {..............................................................................}
@@ -182,14 +177,13 @@ begin
 
                                             MatchCount := MatchCount + 1;
                                         end;
-                                    // REMOVED DUPLICATE END: end;
-                                // REMOVED DUPLICATE END: end;
-                            // REMOVED DUPLICATE END: end;
-                        // REMOVED DUPLICATE END: end;
-                    // REMOVED DUPLICATE END: end;
-                // REMOVED DUPLICATE END: end;
-            // REMOVED DUPLICATE END: end;
-
+end;
+end;
+end;
+end;
+end;
+end;
+end;
             JsonBuilder.Add('  ],');
             JsonBuilder.Add('  "match_count": ' + IntToStr(MatchCount));
             JsonBuilder.Add('}');
@@ -200,13 +194,9 @@ begin
             begin
                 Result := '{"success": false, "error": "' + E.Message + '"}';
             end;
-        // REMOVED DUPLICATE END: end;
+end;
     finally
         JsonBuilder.Free;
-    end;
-end;
-// REMOVED DUPLICATE END: end;
-
 {..............................................................................}
 { GetComponentFromLibrary - Get detailed information about a component         }
 {..............................................................................}
@@ -284,13 +274,12 @@ begin
 
                                         Break;
                                     end;
-                                // REMOVED DUPLICATE END: end;
-                            // REMOVED DUPLICATE END: end;
-                        // REMOVED DUPLICATE END: end;
-                    // REMOVED DUPLICATE END: end;
-                // REMOVED DUPLICATE END: end;
-            // REMOVED DUPLICATE END: end;
-
+end;
+end;
+end;
+end;
+end;
+end;
             if not Found then
             begin
                 Result := '{"success": false, "error": "Component not found: ' + ComponentName + ' in library: ' + LibraryName + '"}';
@@ -303,13 +292,9 @@ begin
             begin
                 Result := '{"success": false, "error": "' + E.Message + '"}';
             end;
-        // REMOVED DUPLICATE END: end;
+end;
     finally
         JsonBuilder.Free;
-    end;
-end;
-// REMOVED DUPLICATE END: end;
-
 {..............................................................................}
 { SearchFootprints - Search for footprints across all loaded PCB libraries     }
 {..............................................................................}
@@ -388,14 +373,13 @@ begin
 
                                             MatchCount := MatchCount + 1;
                                         end;
-                                    // REMOVED DUPLICATE END: end;
-                                // REMOVED DUPLICATE END: end;
-                            // REMOVED DUPLICATE END: end;
-                        // REMOVED DUPLICATE END: end;
-                    // REMOVED DUPLICATE END: end;
-                // REMOVED DUPLICATE END: end;
-            // REMOVED DUPLICATE END: end;
-
+end;
+end;
+end;
+end;
+end;
+end;
+end;
             JsonBuilder.Add('  ],');
             JsonBuilder.Add('  "match_count": ' + IntToStr(MatchCount));
             JsonBuilder.Add('}');
@@ -406,13 +390,6 @@ begin
             begin
                 Result := '{"success": false, "error": "' + E.Message + '"}';
             end;
-        // REMOVED DUPLICATE END: end;
+end;
     finally
         JsonBuilder.Free;
-    end;
-end;
-// REMOVED DUPLICATE END: end;
-
-end;
-// REMOVED DUPLICATE END: end;
-// REMOVED DUPLICATE END: end;
