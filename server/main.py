@@ -50,9 +50,7 @@ DEFAULT_SCRIPT_PATH = MCP_DIR / "AltiumScript" / "Altium_API.PrjScr"
 
 # Initialize FastMCP server
 mcp = FastMCP(
-    "AltiumMCP",
-    version="2.0.0",
-    description="AI-assisted PCB design with Altium Designer using FastMCP 2.0"
+    "AltiumMCP"
 )
 
 # Initialize Altium bridge (manages DelphiScript communication)
@@ -91,20 +89,8 @@ register_workflow_prompts(mcp)
 # ============================================================================
 # LIFECYCLE MANAGEMENT
 # ============================================================================
-
-@mcp.on_initialize()
-async def on_initialize():
-    """Called when MCP client connects"""
-    await altium_bridge.initialize()
-    logger.info("Altium MCP Server v2.0 initialized")
-    logger.info(f"Altium bridge status: {altium_bridge.status}")
-
-
-@mcp.on_shutdown()
-async def on_shutdown():
-    """Called when MCP client disconnects"""
-    await altium_bridge.cleanup()
-    logger.info("Altium MCP Server shutdown complete")
+# Note: FastMCP 2.0 handles lifecycle differently - initialization happens
+# automatically when tools are first called. Cleanup can be added if needed.
 
 
 # ============================================================================
