@@ -31,7 +31,7 @@ begin
       scriptsPath := StringReplace(Project.DM_ProjectFullPath, '\' +
       constScriptProjectName + '.PrjScr','', MkSet(rfReplaceAll,rfIgnoreCase));
     end;
-  end;
+  // REMOVED DUPLICATE END: end;
   result := scriptsPath;
 end;
 
@@ -59,9 +59,9 @@ begin
                 result := Doc.DM_FullPath;
                 Exit;
             end;
-        end;
-    end;
-end;
+        // REMOVED DUPLICATE END: end;
+    // REMOVED DUPLICATE END: end;
+// REMOVED DUPLICATE END: end;
 
 // Modify the EnsureDocumentFocused function to handle all document types
 // and return more detailed information
@@ -134,7 +134,7 @@ begin
             CurrentDoc := SchServer.GetCurrentSchDocument;
             LogMessage := LogMessage + '. Current SCHLIB: ' + BoolToStr((CurrentDoc <> nil) and (CurrentDoc.ObjectID = eSchLib), True);
         end;
-    end;
+    // REMOVED DUPLICATE END: end;
     
     // ShowMessage(LogMessage); // For debugging
     
@@ -154,7 +154,7 @@ begin
             Result := True;
             Exit;
         end;
-    end
+    // REMOVED DUPLICATE END: end
     else if (DocumentKind = 'SCH') and (SchServer <> Nil) then
     begin
         CurrentDoc := SchServer.GetCurrentSchDocument;
@@ -163,7 +163,7 @@ begin
             Result := True;
             Exit;
         end;
-    end
+    // REMOVED DUPLICATE END: end
     else if (DocumentKind = 'SCHLIB') and (SchServer <> Nil) then
     begin
         CurrentDoc := SchServer.GetCurrentSchDocument;
@@ -172,7 +172,7 @@ begin
             Result := True;
             Exit;
         end;
-    end
+    // REMOVED DUPLICATE END: end
     else if (DocumentKind = 'OUTJOB') then
     begin
         OutJobPath := GetOpenOutputJob();
@@ -181,7 +181,7 @@ begin
             Result := True;
             Exit;
         end;
-    end;
+    // REMOVED DUPLICATE END: end;
 
     // Try to find and focus the required document type
     For I := 0 to Project.DM_LogicalDocumentCount - 1 Do
@@ -204,7 +204,7 @@ begin
                     // ShowMessage('Successfully focused PCB document');
                     Exit;
                 end;
-            end
+            // REMOVED DUPLICATE END: end
             else if DocumentKind = 'SCH' then
             begin
                 CurrentDoc := SchServer.GetCurrentSchDocument;
@@ -214,7 +214,7 @@ begin
                     // ShowMessage('Successfully focused SCH document');
                     Exit;
                 end;
-            end
+            // REMOVED DUPLICATE END: end
             else if DocumentKind = 'SCHLIB' then
             begin
                 CurrentDoc := SchServer.GetCurrentSchDocument;
@@ -224,7 +224,7 @@ begin
                     // ShowMessage('Successfully focused SCHLIB document');
                     Exit;
                 end;
-            end
+            // REMOVED DUPLICATE END: end
             else if DocumentKind = 'OUTJOB' then
             begin
                 CurrentDoc := SchServer.GetCurrentSchDocument;
@@ -234,9 +234,9 @@ begin
                     // ShowMessage('Successfully focused SCH document');
                     Exit;
                 end;
-            end;
-        End;
-    End;
+            // REMOVED DUPLICATE END: end;
+        // REMOVED DUPLICATE END: End;
+    // REMOVED DUPLICATE END: End;
 
     // TODO: Do I want to iterate through all workspace projects to find valid document if it is not current document?
     // Could use IWorkspace.DM_ProjectCount and for loop
@@ -315,7 +315,7 @@ begin
     finally
         ResultProps.Free;
     end;
-end;
+// REMOVED DUPLICATE END: end;
 
 // Get all available output job containers from the first open OutJob
 function GetOutputJobContainers(ROOT_DIR: String): String;
@@ -394,7 +394,7 @@ begin
                         finally
                             ContainerProps.Free;
                         end;
-                    end;
+                    // REMOVED DUPLICATE END: end;
 
                     Inc(J);
                     // Exit if we've reached the default value
@@ -427,7 +427,7 @@ begin
         ResultProps.Free;
         ContainersArray.Free;
     end;
-end;
+// REMOVED DUPLICATE END: end;
 
 // Run selected output job containers with simplified logic
 function RunOutputJobs(ContainerNames: TStringList, ROOT_DIR: String): String;
@@ -601,7 +601,7 @@ begin
                 finally
                     ContainerResultProps.Free;
                 end;
-            end;
+            // REMOVED DUPLICATE END: end;
         finally
             IniFile.Free;
         end;
@@ -624,7 +624,7 @@ begin
         ResultProps.Free;
         ContainerResults.Free;
     end;
-end;
+// REMOVED DUPLICATE END: end;
 
 // Helper function to check if a document is open
 function IsOpenDoc(Path: String): Boolean;
@@ -655,6 +655,6 @@ begin
                 result := True;
                 Exit;
             end;
-        end;
-    end;
-end;
+        // REMOVED DUPLICATE END: end;
+    // REMOVED DUPLICATE END: end;
+// REMOVED DUPLICATE END: end;

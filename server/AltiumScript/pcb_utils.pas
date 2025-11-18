@@ -47,8 +47,8 @@ begin
         end;
     finally
         NetsArray.Free;
-    end;
-end;
+    // REMOVED EXTRA END: end;
+// REMOVED DUPLICATE END: end;
 
 // Function to create a net class and add nets to it
 function CreateNetClass(ClassName: String; NetNames: TStringList): String;
@@ -137,11 +137,11 @@ begin
             Result := OutputLines.Text;
         finally
             OutputLines.Free;
-        end;
+        // REMOVED EXTRA END: end;
     finally
         ResultProps.Free;
-    end;
-end;
+    // REMOVED EXTRA END: end;
+// REMOVED DUPLICATE END: end;
 
 // Function to get detailed layer stackup information
 function GetPCBLayerStackup(ROOT_DIR): String;
@@ -229,7 +229,7 @@ begin
             finally
                 LayerProps.Free;
             end;
-        end;
+        // REMOVED DUPLICATE END: end;
         
         // Create final stackup object with summary
         LayerProps := TStringList.Create;
@@ -249,14 +249,14 @@ begin
                 Result := WriteJSONToFile(OutputLines, ROOT_DIR+'\temp_stackup_data.json');
             finally
                 OutputLines.Free;
-            end;
+            // REMOVED EXTRA END: end;
         finally
             LayerProps.Free;
-        end;
+        // REMOVED EXTRA END: end;
     finally
         StackupArray.Free;
-    end;
-end;
+    // REMOVED EXTRA END: end;
+// REMOVED DUPLICATE END: end;
 
 // Function to get all layer information from the PCB
 function GetPCBLayers(ROOT_DIR: String): String;
@@ -365,8 +365,8 @@ begin
                 finally
                     LayerProps.Free;
                 end;
-            end;
-        end;
+            // REMOVED DUPLICATE END: end;
+        // REMOVED DUPLICATE END: end;
         
         // Process other special layers
         // Top Overlay
@@ -395,7 +395,7 @@ begin
             OtherArray.Add(BuildJSONObject(LayerProps, 1));
         finally
             LayerProps.Free;
-        end;
+        // REMOVED EXTRA END: end;
         
         // Top Solder Mask
         LayerProps := TStringList.Create;
@@ -409,7 +409,7 @@ begin
             OtherArray.Add(BuildJSONObject(LayerProps, 1));
         finally
             LayerProps.Free;
-        end;
+        // REMOVED EXTRA END: end;
         
         // Bottom Solder Mask
         LayerProps := TStringList.Create;
@@ -423,7 +423,7 @@ begin
             OtherArray.Add(BuildJSONObject(LayerProps, 1));
         finally
             LayerProps.Free;
-        end;
+        // REMOVED EXTRA END: end;
         
         // Top Paste
         LayerProps := TStringList.Create;
@@ -437,7 +437,7 @@ begin
             OtherArray.Add(BuildJSONObject(LayerProps, 1));
         finally
             LayerProps.Free;
-        end;
+        // REMOVED EXTRA END: end;
         
         // Bottom Paste
         LayerProps := TStringList.Create;
@@ -451,7 +451,7 @@ begin
             OtherArray.Add(BuildJSONObject(LayerProps, 1));
         finally
             LayerProps.Free;
-        end;
+        // REMOVED EXTRA END: end;
         
         // Drill Guide
         LayerProps := TStringList.Create;
@@ -465,7 +465,7 @@ begin
             OtherArray.Add(BuildJSONObject(LayerProps, 1));
         finally
             LayerProps.Free;
-        end;
+        // REMOVED EXTRA END: end;
         
         // Drill Drawing
         LayerProps := TStringList.Create;
@@ -479,7 +479,7 @@ begin
             OtherArray.Add(BuildJSONObject(LayerProps, 1));
         finally
             LayerProps.Free;
-        end;
+        // REMOVED EXTRA END: end;
         
         // Multi Layer
         LayerProps := TStringList.Create;
@@ -493,7 +493,7 @@ begin
             OtherArray.Add(BuildJSONObject(LayerProps, 1));
         finally
             LayerProps.Free;
-        end;
+        // REMOVED EXTRA END: end;
         
         // Keep Out Layer
         LayerProps := TStringList.Create;
@@ -507,7 +507,7 @@ begin
             OtherArray.Add(BuildJSONObject(LayerProps, 1));
         finally
             LayerProps.Free;
-        end;
+        // REMOVED EXTRA END: end;
         
         // Add additional info for the complete layer response
         LayerProps := TStringList.Create;
@@ -536,17 +536,17 @@ begin
                 Result := WriteJSONToFile(OutputLines, ROOT_DIR+'\temp_layers_data.json');
             finally
                 OutputLines.Free;
-            end;
+            // REMOVED EXTRA END: end;
         finally
             LayerProps.Free;
-        end;
+        // REMOVED EXTRA END: end;
     finally
         AllLayersArray.Free;
         CopperArray.Free;
         MechArray.Free;
         OtherArray.Free;
-    end;
-end;
+    // REMOVED EXTRA END: end;
+// REMOVED DUPLICATE END: end;
 
 // Function to set layer visibility (only specified layers visible)
 // Function to set layer visibility with two modes:
@@ -653,7 +653,7 @@ begin
                     FoundCount := FoundCount + 1;
                     break;
                 end;
-            end;
+            // REMOVED DUPLICATE END: end;
             
             // If we've checked all layer types and didn't find a match, add to not found list
             if j > 32 then
@@ -690,7 +690,7 @@ begin
                     else
                         MechLayer.IsDisplayed[Board] := False;
                 end;
-            end;
+            // REMOVED DUPLICATE END: end;
             
             // For special layers
             for j := 1 to 10 do
@@ -713,7 +713,7 @@ begin
                 else
                     Board.LayerIsDisplayed[LayerID] := False;
             end;
-        end
+        // REMOVED DUPLICATE END: end
         else
         begin
             // Hide mode: only hide specified layers, leave others unchanged
@@ -739,7 +739,7 @@ begin
                     if (FoundLayers.IndexOf(IntToStr(MechLayer.V6_LayerID)) >= 0) then
                         MechLayer.IsDisplayed[Board] := False;
                 end;
-            end;
+            // REMOVED DUPLICATE END: end;
             
             // For special layers
             for j := 1 to 10 do
@@ -760,7 +760,7 @@ begin
                 if (FoundLayers.IndexOf(IntToStr(LayerID)) >= 0) then
                     Board.LayerIsDisplayed[LayerID] := False;
             end;
-        end;
+        // REMOVED DUPLICATE END: end;
         
         // Update the display
         Board.ViewManager_FullUpdate;
@@ -789,7 +789,7 @@ begin
         NotFoundList.Free;
         FoundLayers.Free;
     end;
-end;
+// REMOVED DUPLICATE END: end;
 
 // Function to get all PCB rules
 function GetPCBRules(ROOT_DIR: String): String;
@@ -856,7 +856,7 @@ begin
     finally
         RulesArray.Free;
     end;
-end;
+// REMOVED DUPLICATE END: end;
 
 // Function to get all component data from the PCB
 function GetAllComponentData(ROOT_DIR: String, SelectedOnly: Boolean = False): String;
@@ -924,7 +924,7 @@ begin
                 finally
                     ComponentProps.Free;
                 end;
-            end;
+            // REMOVED DUPLICATE END: end;
             
             // Move to next component
             Component := Iterator.NextPCBObject;
@@ -943,8 +943,8 @@ begin
         end;
     finally
         ComponentsArray.Free;
-    end;
-end;
+    // REMOVED EXTRA END: end;
+// REMOVED DUPLICATE END: end;
 
 // Example refactored function using the new JSON utilities
 function GetSelectedComponentsCoordinates(ROOT_DIR: String): String;
@@ -1001,8 +1001,8 @@ begin
                 finally
                     ComponentProps.Free;
                 end;
-            end;
-        end;
+            // REMOVED DUPLICATE END: end;
+        // REMOVED DUPLICATE END: end;
         
         // If components found, build array
         if ComponentsArray.Count > 0 then
@@ -1017,7 +1017,7 @@ begin
         ComponentsArray.Free;
         OutputLines.Free;
     end;
-end;
+// REMOVED DUPLICATE END: end;
 
 // Function to get pin data for specified components
 function GetComponentPinsFromList(ROOT_DIR: String; DesignatorsList: TStringList): String;
@@ -1126,7 +1126,7 @@ begin
                             finally
                                 PinProps.Free;
                             end;
-                        end;
+                        // REMOVED DUPLICATE END: end;
                         
                         Pad := GrpIter.NextPCBObject;
                     end;
@@ -1143,7 +1143,7 @@ begin
                     CompProps.Free;
                     PinsArray.Free;
                 end;
-            end
+            // REMOVED DUPLICATE END: end
             else
             begin
                 // Component not found, add empty component
@@ -1157,8 +1157,8 @@ begin
                 finally
                     CompProps.Free;
                 end;
-            end;
-        end;
+            // REMOVED DUPLICATE END: end;
+        // REMOVED DUPLICATE END: end;
         
         // Build the final JSON array
         OutputLines := TStringList.Create;
@@ -1171,7 +1171,7 @@ begin
     finally
         ComponentsArray.Free;
     end;
-end;
+// REMOVED DUPLICATE END: end;
 
 // Function to move components by X and Y offsets and set rotation
 function MoveComponentsByDesignators(DesignatorsList: TStringList; XOffset, YOffset: TCoord; Rotation: TAngle): String;
@@ -1232,7 +1232,7 @@ begin
                 // Add to missing designators list
                 MissingArray.Add('"' + JSONEscapeString(Designator) + '"');
             end;
-        end;
+        // REMOVED DUPLICATE END: end;
         
         // End transaction
         PCBServer.PostProcess;
@@ -1261,4 +1261,4 @@ begin
         ResultProps.Free;
         MissingArray.Free;
     end;
-end;
+// REMOVED DUPLICATE END: end;

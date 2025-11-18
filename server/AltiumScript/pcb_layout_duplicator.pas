@@ -207,7 +207,7 @@ begin
                             finally
                                 PinProps.Free;
                             end;
-                        end;
+                        // REMOVED DUPLICATE END: end;
                         
                         Pad := GrpIter.NextPCBObject;
                     end;
@@ -224,8 +224,8 @@ begin
                     CompProps.Free;
                     PinsArray.Free;
                 end;
-            end;
-        end;
+            // REMOVED DUPLICATE END: end;
+        // REMOVED DUPLICATE END: end;
 
         // Reset selection for destination components
         Client.SendMessage('PCB:DeSelect', 'Scope=All', 255, Client.CurrentView);
@@ -304,7 +304,7 @@ begin
                                 finally
                                     PinProps.Free;
                                 end;
-                            end;
+                            // REMOVED DUPLICATE END: end;
                             
                             Pad := GrpIter.NextPCBObject;
                         end;
@@ -321,8 +321,8 @@ begin
                         CompProps.Free;
                         PinsArray.Free;
                     end;
-                end;
-            end;
+                // REMOVED DUPLICATE END: end;
+            // REMOVED DUPLICATE END: end;
             
             // Now select all duplicated objects
             for i := 0 to DuplicatedObjects.Count - 1 do
@@ -353,8 +353,8 @@ begin
         ResultProps.Free;
         SourceCmps.Free;
         SourceArray.Free;
-    end;
-end;
+    // REMOVED EXTRA END: end;
+// REMOVED DUPLICATE END: end;
 
 // Function to check if two points are within tolerance
 function CheckWithTolerance(X1, Y1, X2, Y2 : TCoord) : Boolean;
@@ -458,7 +458,7 @@ begin
             begin
                 SelectedObjects.Add(ConnectedPrim);
             end;
-        end;
+        // REMOVED DUPLICATE END: end;
 
         // Process component pairs
         for i := 0 to SourceList.Count - 1 do
@@ -581,7 +581,7 @@ begin
                                             // Remove from selected objects to speed up future searches
                                             SelectedObjects.Delete(j);
                                         end;
-                                    end
+                                    // REMOVED DUPLICATE END: end
                                     else if ConnectedPrim.ObjectId = eArcObject then
                                     begin
                                         // Check both endpoints
@@ -608,7 +608,7 @@ begin
                                             // Remove from selected objects
                                             SelectedObjects.Delete(j);
                                         end;
-                                    end
+                                    // REMOVED DUPLICATE END: end
                                     else if ConnectedPrim.ObjectId = eViaObject then
                                     begin
                                         // Check single point
@@ -630,9 +630,9 @@ begin
                                             // Mark as processed rather than removing
                                             //ProcessedObjects.Add(IntToStr(ObjectAddress));
                                         end;
-                                    end;
-                                end;
-                            end;
+                                    // REMOVED DUPLICATE END: end;
+                                // REMOVED DUPLICATE END: end;
+                            // REMOVED DUPLICATE END: end;
 
                             // Process polygons for this pad - using filtered list
                             PadRect := Pad.BoundingRectangle;
@@ -679,7 +679,7 @@ begin
                                             begin
                                                 Overlapping := True;
                                             end;
-                                        end
+                                        // REMOVED DUPLICATE END: end
                                         // For regions and fills, use distance checking
                                         else if Board.PrimPrimDistance(Pad, Polygon) <= Tolerance then
                                         begin
@@ -704,10 +704,10 @@ begin
 
                                             Inc(PolygonCount);
                                         end;
-                                    end;
-                                end;
-                            end;
-                        end;
+                                    // REMOVED DUPLICATE END: end;
+                                // REMOVED DUPLICATE END: end;
+                            // REMOVED DUPLICATE END: end;
+                        // REMOVED DUPLICATE END: end;
 
                         Pad := PadIterator.NextPCBObject;
                     end;
@@ -716,8 +716,8 @@ begin
 
                     MovedCount := MovedCount + 1;
                 end;
-            end;
-        end;
+            // REMOVED DUPLICATE END: end;
+        // REMOVED DUPLICATE END: end;
 
         // End board modification
         PCBServer.PostProcess;
@@ -755,4 +755,4 @@ begin
         TraceStack.Free;
         ResultProps.Free;
     end;
-end;
+// REMOVED DUPLICATE END: end;

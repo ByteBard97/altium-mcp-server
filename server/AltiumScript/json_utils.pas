@@ -69,7 +69,7 @@ begin
     finally
         Output.Free;
     end;
-end;
+// REMOVED DUPLICATE END: end;
 
 // Function to build a JSON array from a list of items
 function BuildJSONArray(Items: TStringList; ArrayName: String = ''; IndentLevel: Integer = 0): String;
@@ -103,7 +103,7 @@ begin
     finally
         Output.Free;
     end;
-end;
+// REMOVED DUPLICATE END: end;
 
 // Function to write JSON to a file and return as string
 function WriteJSONToFile(JSON: TStringList; FileName: String = ''): String;
@@ -135,7 +135,7 @@ begin
     except
         Result := '{"error": "Failed to write JSON to file"}';
     end;
-end;
+// REMOVED DUPLICATE END: end;
 
 // Helper function to add a simple property to a JSON object
 procedure AddJSONProperty(List: TStringList; Name: String; Value: String; IsString: Boolean = True);
