@@ -3,7 +3,11 @@
 TLDR: Use Claude to control or ask questions about your Altium project.
 This is a Model Context Protocol (MCP) server that provides an interface to interact with Altium Designer through Python. The server allows for querying and manipulation of PCB designs programmatically.
 
-Note: Having Claude place components on the PCB currently fails hard.
+**NEW in Phase 5:** Board initialization and routing tools! Set board size, add outlines and mounting holes, route traces, place vias, and create copper pours. See Board & Routing Tools section below.
+
+**NEW in Phase 4:** Component placement has been completely redesigned and now works reliably! See Component Operations section below.
+
+**NEW in Phase 2:** Project management and library search tools! Create projects, search components across libraries, and manage your workflow. See Project & Library Management section below.
 
 ## Example commands
 - Run all output jobs
@@ -103,6 +107,247 @@ The server provides several tools to interact with Altium Designer:
 - `get_component_property_values`: Get the values of a specific property for all components
 - `get_component_data`: Get detailed data for specific components by designator
 - `get_component_pins`: Get pin information for specified components
+
+### Component Operations (Phase 4 - NEW!)
+Enhanced component placement and manipulation tools with proper footprint library integration:
+
+- `place_component`: Place a single component on the PCB with specified footprint and position
+  - Automatically searches all loaded libraries for the footprint
+  - Supports layer selection (top/bottom), rotation, and precise positioning in mm
+  - Example: `place_component("R1", "0805", 10.0, 20.0, 0, 90)`
+
+- `place_component_array`: Place multiple components in a grid pattern with automatic designator numbering
+  - Perfect for placing resistor or capacitor arrays
+  - Configurable rows, columns, and spacing in both X and Y directions
+  - Example: Place a 2x3 grid of 0805 resistors with 5mm spacing
+
+- `align_components`: Align multiple components to a common edge (left/right/top/bottom)
+  - Select components to align with comma-separated designators
+  - Useful for organizing components in neat rows or columns
+  - Example: `align_components("R1,R2,R3", "left")`
+
+- `delete_component`: Remove a component from the PCB by designator
+  - Clean removal with proper PCB update
+  - Example: `delete_component("R1")`
+
+**What's Fixed:**
+- Component placement now properly searches footprint libraries instead of failing
+- Footprint primitives (pads, tracks, silkscreen) are correctly copied to the component
+- Components are properly registered with the PCB board for full functionality
+- All operations use PCBServer PreProcess/PostProcess for atomic updates
+
+**Example Workflow:**
+```
+1. "Place an 0805 resistor at position 50,50mm with 90 degree rotation"
+2. "Create a 4x4 array of 0603 capacitors starting at 10,10mm with 5mm spacing"
+3. "Align all the components R1, R2, R3, R4 to the left edge"
+4. "Delete the test component R_TEST"
+```
+
+### Board & Routing Tools (Phase 5 - NEW!)
+Board initialization and manual routing capabilities:
+
+#### Board Initialization Tools
+- `set_board_size`: Set the dimensions of the PCB board
+  - Specify width and height in millimeters
+  - Example: `set_board_size(100, 80)` for a 100mm x 80mm board
+
+- `add_board_outline`: Add a rectangular board outline to the PCB
+  - Define outline position (x, y) and dimensions (width, height) in mm
+  - Creates outline on KeepOut layer with 0.2mm width
+  - Example: `add_board_outline(0, 0, 100, 80)` for a board outline at origin
+
+- `add_mounting_hole`: Add a mounting hole to the PCB
+  - Specify position (x, y), hole diameter, and optional pad diameter in mm
+  - Creates plated through-hole pad for mechanical mounting
+  - Pad diameter defaults to 2x hole diameter if not specified
+  - Example: `add_mounting_hole(10, 10, 3.2, 6.4)` for M3 mounting hole
+
+- `add_board_text`: Add text to the PCB
+  - Place text at specified coordinates with configurable size and layer
+  - Supports layers: TopOverlay, BottomOverlay, TopSilkScreen, etc.
+  - Example: `add_board_text("REV 1.0", 50, 5, "TopOverlay", 1.5)`
+
+#### Routing Tools
+- `route_trace`: Route a trace between two points on a specified layer
+  - Define start point (x1, y1), end point (x2, y2), layer, and width in mm
+  - Optional net assignment for proper electrical connectivity
+  - Example: `route_trace(10, 10, 50, 50, "TopLayer", 0.25, "GND")`
+
+- `add_via`: Place a via at specified coordinates
+  - Specify position (x, y), via diameter, hole size, and layer span in mm
+  - Connects between start_layer and end_layer (defaults: TopLayer to BottomLayer)
+  - Optional net assignment for electrical connectivity
+  - Example: `add_via(25, 25, 0.6, 0.3, "TopLayer", "BottomLayer", "VCC")`
+
+- `add_copper_pour`: Create a copper pour (filled polygon zone)
+  - Define rectangular area with position, dimensions, layer, and net
+  - Typically used for ground or power planes
+  - Control pour behavior with pour_over_same_net option
+  - Example: `add_copper_pour(0, 0, 100, 80, "BottomLayer", "GND", True)`
+
+**Example Workflow:**
+```
+1. "Set the board size to 100mm x 80mm"
+2. "Add a board outline at origin with dimensions 100mm x 80mm"
+3. "Add mounting holes at each corner (M3 size, 3.2mm hole, 6.4mm pad)"
+4. "Add revision text 'REV 1.0' on the top overlay at 50,5mm"
+5. "Route a 0.25mm trace from pin A to pin B on the top layer"
+6. "Add a via at 25,25mm to connect top to bottom layer"
+7. "Create a GND copper pour on the bottom layer covering the entire board"
+```
+
+### Project & Library Management (Phase 2 - NEW!)
+Project lifecycle management and library search capabilities:
+
+#### Project Management Tools
+- `create_project`: Create a new Altium project with PCB and schematic documents
+  - Specify project name, path, and optional template (blank, arduino, raspberry_pi)
+  - Automatically creates project structure with blank PCB and schematic
+  - Example: `create_project("MyBoard", "C:\\Projects\\MyBoard", "blank")`
+
+- `save_project`: Save the currently open project and all its documents
+  - Saves all PCB, schematic, and other project documents
+  - Example: "Save my current project"
+
+- `get_project_info`: Get detailed information about the currently open project
+  - Returns project name, path, file count, and document type breakdown
+  - Shows PCB count, schematic count, and other document counts
+  - Example: "What files are in my current project?"
+
+- `close_project`: Close the currently open project
+  - Cleanly closes project and all associated documents
+  - Example: "Close this project"
+
+#### Library Search Tools
+- `list_component_libraries`: List all loaded component and PCB libraries
+  - Shows library names, paths, and types (Schematic, PCB, or Integrated)
+  - Example: "What libraries do I have loaded?"
+
+- `search_components`: Search for components across all loaded libraries
+  - Searches component names and descriptions
+  - Returns component name, description, library, and footprint information
+  - Example: `search_components("LM358")` or "Find all op-amp components"
+
+- `get_component_from_library`: Get detailed information about a specific component
+  - Retrieve component details including pin count and other parameters
+  - Example: `get_component_from_library("OpAmps.SchLib", "LM358")`
+
+- `search_footprints`: Search for footprints across all loaded PCB libraries
+  - Searches footprint names
+  - Returns footprint name, library, and pad count
+  - Example: `search_footprints("0805")` or "Find all SOT-23 footprints"
+
+**Example Workflows:**
+```
+1. "Create a new project called PowerSupply in C:\\Projects"
+2. "Search for components containing '555 timer' in the loaded libraries"
+3. "What libraries are currently loaded?"
+4. "Find all 0603 footprints available"
+5. "Get details for component LM358 from the OpAmps library"
+```
+
+**Benefits:**
+- Quickly discover available components without manually browsing libraries
+- Understand project structure and contents programmatically
+- Automate project creation and management tasks
+- Search across multiple libraries simultaneously
+
+### Design Analysis & Intelligence (Phase 3 - NEW!)
+Advanced design analysis tools for tracking design quality and recognizing circuit patterns:
+
+#### DRC History Tracking
+Track Design Rule Check (DRC) results over time to monitor design quality and improvement trends:
+
+- `run_drc_with_history`: Run DRC and automatically save results to history database
+  - Stores violation counts by severity (critical, warning, info)
+  - Records violation types and their frequency
+  - Generates progress reports comparing to previous runs
+  - Database stored at `~/.altium-mcp/drc_history.db`
+  - Example: "Run DRC and track the results"
+
+- `get_drc_history`: View historical DRC results for a project
+  - Shows trends over time (improving, declining, stable)
+  - Displays violation counts for recent runs
+  - Provides progress comparison between runs
+  - Example: "Show me the DRC history for this project"
+
+- `get_drc_run_details`: Get detailed information about a specific DRC run
+  - Complete violation data for a historical run
+  - Breakdown of violation types
+  - Example: `get_drc_run_details(run_id=5)`
+
+**DRC Tracking Benefits:**
+- Monitor design quality improvements over time
+- Identify trends in violation patterns
+- Track progress toward zero-violation goals
+- Historical record for design reviews
+
+#### Circuit Pattern Recognition
+Automatically identify common circuit patterns in your PCB design:
+
+- `identify_circuit_patterns`: Analyze design to find common circuit topologies
+  - **Power Supplies Detected:**
+    - Buck/Boost DC-DC converters (switching regulators)
+    - Linear voltage regulators (LM78xx, LM79xx, AMS1117, etc.)
+    - Low-dropout regulators (LDOs)
+  - **Interface Circuits Detected:**
+    - USB interfaces (USB-C, USB 2.0, USB 3.0)
+    - Ethernet interfaces (RJ45, magnetics)
+    - SPI interfaces (MOSI, MISO, SCLK signals)
+    - I2C interfaces (SDA, SCL signals)
+  - **Filter Circuits Detected:**
+    - RC low-pass filters
+    - LC filters
+  - Returns confidence scores for each detected pattern
+  - Example: "What circuit patterns are in my design?"
+
+**Pattern Recognition Benefits:**
+- Quickly understand design topology and architecture
+- Verify expected circuits are present
+- Identify missing decoupling or filtering
+- Auto-document design sections
+
+**Example Workflows:**
+```
+1. "Analyze my design and tell me what circuit patterns you find"
+   → Identifies 2 linear regulators, 1 USB interface, 3 RC filters
+
+2. "Run DRC and track the results in history"
+   → Saves results, shows trend: "improving" (20 → 15 violations)
+
+3. "Show me the DRC history for the last 5 runs"
+   → Displays historical trend with violation breakdowns
+
+4. "What power supply circuits are in my design?"
+   → Pattern recognition finds buck converter and LDO regulator
+```
+
+**Pattern Recognition Output Example:**
+```json
+{
+  "patterns": {
+    "power_supplies": [
+      {
+        "type": "linear_regulator",
+        "confidence": 0.9,
+        "components": ["U1", "C1", "C2"],
+        "description": "Linear regulator: LM7805"
+      }
+    ],
+    "interfaces": [
+      {
+        "type": "usb_interface",
+        "confidence": 0.9,
+        "nets": ["USB_D+", "USB_D-", "USB_VBUS"],
+        "components": ["J1"],
+        "description": "USB interface detected"
+      }
+    ]
+  },
+  "summary": "Found: 1 power supply circuit(s), 1 interface circuit(s)"
+}
+```
 
 ### Schematic/Symbol
 - `get_schematic_data`: Get schematic data for specified components

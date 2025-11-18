@@ -120,6 +120,84 @@ class AltiumIntegrationTester:
         )
 
         # ============================================================
+        # COMPONENT OPERATIONS TOOLS - PHASE 4 (4 tests)
+        # ============================================================
+
+        print("\n" + "="*60)
+        print("COMPONENT OPERATIONS TOOLS (Phase 4)")
+        print("="*60)
+
+        # Test 4a: Place component
+        print("\nNote: This will place a test component on the PCB")
+        response = input("Proceed with placing component R_TEST_MCP? (y/n): ")
+        if response.lower() == 'y':
+            await self.test_tool(
+                "Place Component",
+                "place_component",
+                {
+                    "designator": "R_TEST_MCP",
+                    "footprint": "0805",
+                    "x": 50.0,
+                    "y": 50.0,
+                    "layer": 0,
+                    "rotation": 0
+                }
+            )
+        else:
+            print("⚠️  Skipping place component test")
+
+        # Test 4b: Place component array
+        print("\nNote: This will place a 2x2 array of test components")
+        response = input("Proceed with placing component array? (y/n): ")
+        if response.lower() == 'y':
+            await self.test_tool(
+                "Place Component Array",
+                "place_component_array",
+                {
+                    "footprint": "0805",
+                    "ref_des": "C_TEST_",
+                    "start_x": 60.0,
+                    "start_y": 60.0,
+                    "spacing_x": 5.0,
+                    "spacing_y": 5.0,
+                    "rows": 2,
+                    "cols": 2
+                }
+            )
+        else:
+            print("⚠️  Skipping place component array test")
+
+        # Test 4c: Align components (if we have at least 2 designators)
+        if len(designators) >= 2:
+            print(f"\nNote: This will align components {designators[0]} and {designators[1]}")
+            response = input("Proceed with aligning components? (y/n): ")
+            if response.lower() == 'y':
+                await self.test_tool(
+                    "Align Components",
+                    "align_components",
+                    {
+                        "designators": f"{designators[0]},{designators[1]}",
+                        "alignment": "left"
+                    }
+                )
+            else:
+                print("⚠️  Skipping align components test")
+        else:
+            print("\n⚠️  Skipping align test - need at least 2 components")
+
+        # Test 4d: Delete component (delete the test component we placed)
+        print("\nNote: This will delete component R_TEST_MCP if it exists")
+        response = input("Proceed with deleting test component? (y/n): ")
+        if response.lower() == 'y':
+            await self.test_tool(
+                "Delete Component",
+                "delete_component",
+                {"designator": "R_TEST_MCP"}
+            )
+        else:
+            print("⚠️  Skipping delete component test")
+
+        # ============================================================
         # NET TOOLS (2 tests)
         # ============================================================
 
@@ -288,6 +366,43 @@ class AltiumIntegrationTester:
             "get_pcb_layer_stackup",
             {}
         )
+
+        # ============================================================
+        # ANALYSIS TOOLS (Phase 3) (4 tests)
+        # ============================================================
+
+        print("\n" + "="*60)
+        print("DESIGN ANALYSIS TOOLS (Phase 3)")
+        print("="*60)
+
+        # Test 18: Identify circuit patterns
+        await self.test_tool(
+            "Identify Circuit Patterns",
+            "identify_circuit_patterns",
+            {},
+            lambda r: r.data is not None and "patterns" in str(r.data)
+        )
+
+        # Test 19: Run DRC with history tracking
+        await self.test_tool(
+            "Run DRC with History Tracking",
+            "run_drc_with_history",
+            {"project_path": "test_project"},
+            lambda r: r.data is not None and "run_id" in str(r.data)
+        )
+
+        # Test 20: Get DRC history
+        await self.test_tool(
+            "Get DRC History",
+            "get_drc_history",
+            {"project_path": "test_project", "limit": 5},
+            lambda r: r.data is not None and "history" in str(r.data)
+        )
+
+        # Test 21: Get DRC run details
+        # Note: This requires a valid run_id from the previous test
+        print("\nNote: Skipping get_drc_run_details (requires valid run_id from database)")
+        print("To test this manually, run get_drc_history first to get a run_id")
 
         # ============================================================
         # SUMMARY

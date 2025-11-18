@@ -70,7 +70,7 @@ begin
                 
                 break;
             end;
-        end;
+        // REMOVED DUPLICATE END: end;
         
         if DesignatorsList.Count > 0 then
         begin
@@ -84,7 +84,7 @@ begin
     finally
         DesignatorsList.Free;
     end;
-end;
+// REMOVED DUPLICATE END: end;
 
 // Extract the create net class logic
 function ExecuteCreateNetClass(RequestData: TStringList): String;
@@ -127,8 +127,8 @@ begin
                     
                     i := i + 1;
                 end;
-            end;
-        end;
+            // REMOVED DUPLICATE END: end;
+        // REMOVED DUPLICATE END: end;
         
         if (ComponentName <> '') and (SourceList.Count > 0) then
         begin
@@ -144,7 +144,7 @@ begin
     finally
         SourceList.Free;
     end;
-end;
+// REMOVED DUPLICATE END: end;
 
 // Extract the take view screenshot logic
 function ExecuteTakeViewScreenshot(RequestData: TStringList): String;
@@ -168,7 +168,7 @@ begin
             ViewType := ParamValue;
             Break;
         end;
-    end;
+    // REMOVED DUPLICATE END: end;
     
     Result := TakeViewScreenshot(ViewType);
 end;
@@ -215,7 +215,7 @@ begin
                     
                     i := i + 1;
                 end;
-            end
+            // REMOVED DUPLICATE END: end
             // Look for description
             else if (Pos('"description"', RequestData[i]) > 0) then
             begin
@@ -224,7 +224,7 @@ begin
                 ParamValue := TrimJSON(ParamValue);
                 PinsList.Add('Description=' + ParamValue);
             end;
-        end;
+        // REMOVED DUPLICATE END: end;
         
         if ComponentName <> '' then
         begin
@@ -238,7 +238,7 @@ begin
     finally
         PinsList.Free;
     end;
-end;
+// REMOVED DUPLICATE END: end;
 
 // Extract the set PCB layer visibility logic
 function ExecuteSetPCBLayerVisibility(RequestData: TStringList): String;
@@ -275,7 +275,7 @@ begin
                     
                     i := i + 1;
                 end;
-            end
+            // REMOVED DUPLICATE END: end
             // Look for visible parameter
             else if (Pos('"visible"', RequestData[i]) > 0) then
             begin
@@ -284,7 +284,7 @@ begin
                 ParamValue := TrimJSON(ParamValue);
                 Visible := (ParamValue = 'true');
             end;
-        end;
+        // REMOVED DUPLICATE END: end;
         
         if SourceList.Count > 0 then
         begin
@@ -297,7 +297,7 @@ begin
     finally
         SourceList.Free;
     end;
-end;
+// REMOVED DUPLICATE END: end;
 
 // Extract the move components logic
 function ExecuteMoveComponents(RequestData: TStringList): String;
@@ -337,7 +337,7 @@ begin
                     
                     i := i + 1;
                 end;
-            end
+            // REMOVED DUPLICATE END: end
             // Look for x_offset
             else if (Pos('"x_offset"', RequestData[i]) > 0) then
             begin
@@ -362,7 +362,7 @@ begin
                 ParamValue := TrimJSON(ParamValue);
                 Rotation := StrToFloat(ParamValue);
             end;
-        end;
+        // REMOVED DUPLICATE END: end;
         
         if DesignatorsList.Count > 0 then
         begin
@@ -376,7 +376,7 @@ begin
     finally
         DesignatorsList.Free;
     end;
-end;
+// REMOVED DUPLICATE END: end;
 
 // Extract the layout duplicator apply logic
 function ExecuteLayoutDuplicatorApply(RequestData: TStringList): String;
@@ -412,7 +412,7 @@ begin
                     
                     i := i + 1;
                 end;
-            end
+            // REMOVED DUPLICATE END: end
             // Look for destination designators array
             else if (Pos('"destination_designators"', RequestData[i]) > 0) then
             begin
@@ -432,8 +432,8 @@ begin
                     
                     i := i + 1;
                 end;
-            end
-        end;
+            // REMOVED DUPLICATE END: end
+        // REMOVED DUPLICATE END: end;
         
         if (SourceList.Count > 0) and (DestList.Count > 0) then
         begin
@@ -448,7 +448,7 @@ begin
         SourceList.Free;
         DestList.Free;
     end;
-end;
+// REMOVED DUPLICATE END: end;
 
 // Function to execute get output job containers
 function ExecuteGetOutputJobContainers(RequestData: TStringList): String;
@@ -470,7 +470,7 @@ begin
             OutJobPath := ParamValue;
             break;
         end;
-    end;
+    // REMOVED DUPLICATE END: end;
     
     // Call the appropriate function
     Result := GetOutputJobContainers(ROOT_DIR);
@@ -507,8 +507,8 @@ begin
                     
                     i := i + 1;
                 end;
-            end;
-        end;
+            // REMOVED DUPLICATE END: end;
+        // REMOVED DUPLICATE END: end;
         
         if ContainersList.Count > 0 then
         begin
@@ -522,14 +522,840 @@ begin
     finally
         ContainersList.Free;
     end;
-end;
+// REMOVED DUPLICATE END: end;
+
+// Execute place_component command
+function ExecutePlaceComponent(RequestData: TStringList): String;
+var
+    ParamValue: String;
+    i, ValueStart: Integer;
+    Designator, Footprint: String;
+    X, Y: Double;
+    Layer, Rotation: Integer;
+begin
+    Designator := '';
+    Footprint := '';
+    X := 0;
+    Y := 0;
+    Layer := 0;
+    Rotation := 0;
+
+    try
+        // Parse parameters from the request
+        for i := 0 to RequestData.Count - 1 do
+        begin
+            if (Pos('"designator"', RequestData[i]) > 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                Designator := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                Designator := TrimJSON(Designator);
+            end
+            else if (Pos('"footprint"', RequestData[i]) > 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                Footprint := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                Footprint := TrimJSON(Footprint);
+            end
+            else if (Pos('"x"', RequestData[i]) > 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                ParamValue := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                ParamValue := TrimJSON(ParamValue);
+                X := StrToFloat(ParamValue);
+            end
+            else if (Pos('"y"', RequestData[i]) > 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                ParamValue := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                ParamValue := TrimJSON(ParamValue);
+                Y := StrToFloat(ParamValue);
+            end
+            else if (Pos('"layer"', RequestData[i]) > 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                ParamValue := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                ParamValue := TrimJSON(ParamValue);
+                Layer := StrToInt(ParamValue);
+            end
+            else if (Pos('"rotation"', RequestData[i]) > 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                ParamValue := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                ParamValue := TrimJSON(ParamValue);
+                Rotation := StrToInt(ParamValue);
+            end;
+        // REMOVED DUPLICATE END: end;
+
+        if (Designator <> '') and (Footprint <> '') then
+        begin
+            Result := PlaceComponent(Designator, Footprint, X, Y, Layer, Rotation);
+        end
+        else
+        begin
+            Result := '{"success": false, "error": "Missing required parameters"}';
+        end;
+    except
+        on E: Exception do
+            Result := '{"success": false, "error": "' + E.Message + '"}';
+    end;
+// REMOVED DUPLICATE END: end;
+
+// Execute delete_component command
+function ExecuteDeleteComponent(RequestData: TStringList): String;
+var
+    i, ValueStart: Integer;
+    Designator: String;
+begin
+    Designator := '';
+
+    try
+        // Parse parameters from the request
+        for i := 0 to RequestData.Count - 1 do
+        begin
+            if (Pos('"designator"', RequestData[i]) > 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                Designator := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                Designator := TrimJSON(Designator);
+                break;
+            end;
+        // REMOVED DUPLICATE END: end;
+
+        if Designator <> '' then
+        begin
+            Result := DeleteComponent(Designator);
+        end
+        else
+        begin
+            Result := '{"success": false, "error": "No designator provided"}';
+        end;
+    except
+        on E: Exception do
+            Result := '{"success": false, "error": "' + E.Message + '"}';
+    end;
+// REMOVED DUPLICATE END: end;
+
+// Execute place_component_array command
+function ExecutePlaceComponentArray(RequestData: TStringList): String;
+var
+    ParamValue: String;
+    i, ValueStart: Integer;
+    Footprint, RefDes: String;
+    StartX, StartY, SpacingX, SpacingY: Double;
+    Rows, Cols: Integer;
+begin
+    Footprint := '';
+    RefDes := '';
+    StartX := 0;
+    StartY := 0;
+    SpacingX := 0;
+    SpacingY := 0;
+    Rows := 1;
+    Cols := 1;
+
+    try
+        // Parse parameters from the request
+        for i := 0 to RequestData.Count - 1 do
+        begin
+            if (Pos('"footprint"', RequestData[i]) > 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                Footprint := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                Footprint := TrimJSON(Footprint);
+            end
+            else if (Pos('"ref_des"', RequestData[i]) > 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                RefDes := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                RefDes := TrimJSON(RefDes);
+            end
+            else if (Pos('"start_x"', RequestData[i]) > 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                ParamValue := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                ParamValue := TrimJSON(ParamValue);
+                StartX := StrToFloat(ParamValue);
+            end
+            else if (Pos('"start_y"', RequestData[i]) > 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                ParamValue := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                ParamValue := TrimJSON(ParamValue);
+                StartY := StrToFloat(ParamValue);
+            end
+            else if (Pos('"spacing_x"', RequestData[i]) > 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                ParamValue := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                ParamValue := TrimJSON(ParamValue);
+                SpacingX := StrToFloat(ParamValue);
+            end
+            else if (Pos('"spacing_y"', RequestData[i]) > 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                ParamValue := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                ParamValue := TrimJSON(ParamValue);
+                SpacingY := StrToFloat(ParamValue);
+            end
+            else if (Pos('"rows"', RequestData[i]) > 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                ParamValue := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                ParamValue := TrimJSON(ParamValue);
+                Rows := StrToInt(ParamValue);
+            end
+            else if (Pos('"cols"', RequestData[i]) > 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                ParamValue := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                ParamValue := TrimJSON(ParamValue);
+                Cols := StrToInt(ParamValue);
+            end;
+        // REMOVED DUPLICATE END: end;
+
+        if (Footprint <> '') and (RefDes <> '') then
+        begin
+            Result := PlaceComponentArray(Footprint, RefDes, StartX, StartY, SpacingX, SpacingY, Rows, Cols);
+        end
+        else
+        begin
+            Result := '{"success": false, "error": "Missing required parameters"}';
+        end;
+    except
+        on E: Exception do
+            Result := '{"success": false, "error": "' + E.Message + '"}';
+    end;
+// REMOVED DUPLICATE END: end;
+
+// Execute align_components command
+function ExecuteAlignComponents(RequestData: TStringList): String;
+var
+    ParamValue: String;
+    i, ValueStart: Integer;
+    Designators, Alignment: String;
+begin
+    Designators := '';
+    Alignment := '';
+
+    try
+        // Parse parameters from the request
+        for i := 0 to RequestData.Count - 1 do
+        begin
+            if (Pos('"designators"', RequestData[i]) > 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                Designators := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                Designators := TrimJSON(Designators);
+            end
+            else if (Pos('"alignment"', RequestData[i]) > 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                Alignment := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                Alignment := TrimJSON(Alignment);
+            end;
+        // REMOVED DUPLICATE END: end;
+
+        if (Designators <> '') and (Alignment <> '') then
+        begin
+            Result := AlignComponents(Designators, Alignment);
+        end
+        else
+        begin
+            Result := '{"success": false, "error": "Missing required parameters"}';
+        end;
+    except
+        on E: Exception do
+            Result := '{"success": false, "error": "' + E.Message + '"}';
+    end;
+// REMOVED DUPLICATE END: end;
+
+{..............................................................................}
+{ Phase 2: Project Management Command Executors                                }
+{..............................................................................}
+
+function ExecuteCreateProject(RequestData: TStringList): String;
+var
+    i, ValueStart: Integer;
+    ProjectName, ProjectPath, Template: String;
+begin
+    ProjectName := '';
+    ProjectPath := '';
+    Template := 'blank';
+
+    try
+        for i := 0 to RequestData.Count - 1 do
+        begin
+            if (Pos('"project_name"', RequestData[i]) > 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                ProjectName := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                ProjectName := TrimJSON(ProjectName);
+            end
+            else if (Pos('"project_path"', RequestData[i]) > 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                ProjectPath := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                ProjectPath := TrimJSON(ProjectPath);
+            end
+            else if (Pos('"template"', RequestData[i]) > 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                Template := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                Template := TrimJSON(Template);
+            end;
+        // REMOVED DUPLICATE END: end;
+
+        if (ProjectName <> '') and (ProjectPath <> '') then
+            Result := CreateProject(ProjectName, ProjectPath, Template)
+        else
+            Result := '{"success": false, "error": "Missing required parameters"}';
+    except
+        on E: Exception do
+            Result := '{"success": false, "error": "' + E.Message + '"}';
+    end;
+// REMOVED DUPLICATE END: end;
+
+{..............................................................................}
+{ Phase 2: Library Search Command Executors                                    }
+{..............................................................................}
+
+function ExecuteSearchComponents(RequestData: TStringList): String;
+var
+    i, ValueStart: Integer;
+    Query: String;
+begin
+    Query := '';
+
+    try
+        for i := 0 to RequestData.Count - 1 do
+        begin
+            if (Pos('"query"', RequestData[i]) > 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                Query := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                Query := TrimJSON(Query);
+                break;
+            end;
+        // REMOVED DUPLICATE END: end;
+
+        if Query <> '' then
+            Result := SearchComponents(Query)
+        else
+            Result := '{"success": false, "error": "Query parameter required"}';
+    except
+        on E: Exception do
+            Result := '{"success": false, "error": "' + E.Message + '"}';
+    end;
+// REMOVED DUPLICATE END: end;
+
+function ExecuteGetComponentFromLibrary(RequestData: TStringList): String;
+var
+    i, ValueStart: Integer;
+    LibraryName, ComponentName: String;
+begin
+    LibraryName := '';
+    ComponentName := '';
+
+    try
+        for i := 0 to RequestData.Count - 1 do
+        begin
+            if (Pos('"library_name"', RequestData[i]) > 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                LibraryName := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                LibraryName := TrimJSON(LibraryName);
+            end
+            else if (Pos('"component_name"', RequestData[i]) > 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                ComponentName := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                ComponentName := TrimJSON(ComponentName);
+            end;
+        // REMOVED DUPLICATE END: end;
+
+        if (LibraryName <> '') and (ComponentName <> '') then
+            Result := GetComponentFromLibrary(LibraryName, ComponentName)
+        else
+            Result := '{"success": false, "error": "Missing required parameters"}';
+    except
+        on E: Exception do
+            Result := '{"success": false, "error": "' + E.Message + '"}';
+    end;
+// REMOVED DUPLICATE END: end;
+
+function ExecuteSearchFootprints(RequestData: TStringList): String;
+var
+    i, ValueStart: Integer;
+    Query: String;
+begin
+    Query := '';
+
+    try
+        for i := 0 to RequestData.Count - 1 do
+        begin
+            if (Pos('"query"', RequestData[i]) > 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                Query := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                Query := TrimJSON(Query);
+                break;
+            end;
+        // REMOVED DUPLICATE END: end;
+
+        if Query <> '' then
+            Result := SearchFootprints(Query)
+        else
+            Result := '{"success": false, "error": "Query parameter required"}';
+    except
+        on E: Exception do
+            Result := '{"success": false, "error": "' + E.Message + '"}';
+    end;
+// REMOVED DUPLICATE END: end;
+
+{..............................................................................}
+{ Phase 5: Board & Routing Command Executors                                  }
+{..............................................................................}
+
+function ExecuteSetBoardSize(RequestData: TStringList): String;
+var
+    i, ValueStart: Integer;
+    ParamValue: String;
+    Width, Height: Double;
+begin
+    Width := 0;
+    Height := 0;
+
+    try
+        for i := 0 to RequestData.Count - 1 do
+        begin
+            if (Pos('"width"', RequestData[i]) > 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                ParamValue := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                ParamValue := TrimJSON(ParamValue);
+                Width := StrToFloat(ParamValue);
+            end
+            else if (Pos('"height"', RequestData[i]) > 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                ParamValue := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                ParamValue := TrimJSON(ParamValue);
+                Height := StrToFloat(ParamValue);
+            end;
+        // REMOVED DUPLICATE END: end;
+
+        if (Width > 0) and (Height > 0) then
+            Result := SetBoardSize(Width, Height)
+        else
+            Result := '{"success": false, "error": "Invalid board dimensions"}';
+    except
+        on E: Exception do
+            Result := '{"success": false, "error": "' + E.Message + '"}';
+    end;
+// REMOVED DUPLICATE END: end;
+
+function ExecuteAddBoardOutline(RequestData: TStringList): String;
+var
+    i, ValueStart: Integer;
+    ParamValue: String;
+    X, Y, Width, Height: Double;
+begin
+    X := 0;
+    Y := 0;
+    Width := 0;
+    Height := 0;
+
+    try
+        for i := 0 to RequestData.Count - 1 do
+        begin
+            if (Pos('"x"', RequestData[i]) > 0) and (Pos('"x1"', RequestData[i]) = 0) and (Pos('"x2"', RequestData[i]) = 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                ParamValue := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                ParamValue := TrimJSON(ParamValue);
+                X := StrToFloat(ParamValue);
+            end
+            else if (Pos('"y"', RequestData[i]) > 0) and (Pos('"y1"', RequestData[i]) = 0) and (Pos('"y2"', RequestData[i]) = 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                ParamValue := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                ParamValue := TrimJSON(ParamValue);
+                Y := StrToFloat(ParamValue);
+            end
+            else if (Pos('"width"', RequestData[i]) > 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                ParamValue := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                ParamValue := TrimJSON(ParamValue);
+                Width := StrToFloat(ParamValue);
+            end
+            else if (Pos('"height"', RequestData[i]) > 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                ParamValue := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                ParamValue := TrimJSON(ParamValue);
+                Height := StrToFloat(ParamValue);
+            end;
+        // REMOVED DUPLICATE END: end;
+
+        if (Width > 0) and (Height > 0) then
+            Result := AddBoardOutline(X, Y, Width, Height)
+        else
+            Result := '{"success": false, "error": "Invalid outline dimensions"}';
+    except
+        on E: Exception do
+            Result := '{"success": false, "error": "' + E.Message + '"}';
+    end;
+// REMOVED DUPLICATE END: end;
+
+function ExecuteAddMountingHole(RequestData: TStringList): String;
+var
+    i, ValueStart: Integer;
+    ParamValue: String;
+    X, Y, HoleDiameter, PadDiameter: Double;
+begin
+    X := 0;
+    Y := 0;
+    HoleDiameter := 0;
+    PadDiameter := 0;
+
+    try
+        for i := 0 to RequestData.Count - 1 do
+        begin
+            if (Pos('"x"', RequestData[i]) > 0) and (Pos('"x1"', RequestData[i]) = 0) and (Pos('"x2"', RequestData[i]) = 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                ParamValue := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                ParamValue := TrimJSON(ParamValue);
+                X := StrToFloat(ParamValue);
+            end
+            else if (Pos('"y"', RequestData[i]) > 0) and (Pos('"y1"', RequestData[i]) = 0) and (Pos('"y2"', RequestData[i]) = 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                ParamValue := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                ParamValue := TrimJSON(ParamValue);
+                Y := StrToFloat(ParamValue);
+            end
+            else if (Pos('"hole_diameter"', RequestData[i]) > 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                ParamValue := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                ParamValue := TrimJSON(ParamValue);
+                HoleDiameter := StrToFloat(ParamValue);
+            end
+            else if (Pos('"pad_diameter"', RequestData[i]) > 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                ParamValue := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                ParamValue := TrimJSON(ParamValue);
+                PadDiameter := StrToFloat(ParamValue);
+            end;
+        // REMOVED DUPLICATE END: end;
+
+        if HoleDiameter > 0 then
+            Result := AddMountingHole(X, Y, HoleDiameter, PadDiameter)
+        else
+            Result := '{"success": false, "error": "Invalid hole diameter"}';
+    except
+        on E: Exception do
+            Result := '{"success": false, "error": "' + E.Message + '"}';
+    end;
+// REMOVED DUPLICATE END: end;
+
+function ExecuteAddBoardText(RequestData: TStringList): String;
+var
+    i, ValueStart: Integer;
+    ParamValue, Text, Layer: String;
+    X, Y, Size: Double;
+begin
+    Text := '';
+    Layer := 'TopOverlay';
+    X := 0;
+    Y := 0;
+    Size := 1.0;
+
+    try
+        for i := 0 to RequestData.Count - 1 do
+        begin
+            if (Pos('"text"', RequestData[i]) > 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                ParamValue := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                Text := TrimJSON(ParamValue);
+            end
+            else if (Pos('"x"', RequestData[i]) > 0) and (Pos('"x1"', RequestData[i]) = 0) and (Pos('"x2"', RequestData[i]) = 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                ParamValue := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                ParamValue := TrimJSON(ParamValue);
+                X := StrToFloat(ParamValue);
+            end
+            else if (Pos('"y"', RequestData[i]) > 0) and (Pos('"y1"', RequestData[i]) = 0) and (Pos('"y2"', RequestData[i]) = 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                ParamValue := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                ParamValue := TrimJSON(ParamValue);
+                Y := StrToFloat(ParamValue);
+            end
+            else if (Pos('"layer"', RequestData[i]) > 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                ParamValue := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                Layer := TrimJSON(ParamValue);
+            end
+            else if (Pos('"size"', RequestData[i]) > 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                ParamValue := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                ParamValue := TrimJSON(ParamValue);
+                Size := StrToFloat(ParamValue);
+            end;
+        // REMOVED DUPLICATE END: end;
+
+        if Text <> '' then
+            Result := AddBoardText(Text, X, Y, Size, Layer)
+        else
+            Result := '{"success": false, "error": "No text provided"}';
+    except
+        on E: Exception do
+            Result := '{"success": false, "error": "' + E.Message + '"}';
+    end;
+// REMOVED DUPLICATE END: end;
+
+function ExecuteRouteTrace(RequestData: TStringList): String;
+var
+    i, ValueStart: Integer;
+    ParamValue, Layer, NetName: String;
+    X1, Y1, X2, Y2, Width: Double;
+begin
+    X1 := 0;
+    Y1 := 0;
+    X2 := 0;
+    Y2 := 0;
+    Width := 0;
+    Layer := 'TopLayer';
+    NetName := '';
+
+    try
+        for i := 0 to RequestData.Count - 1 do
+        begin
+            if (Pos('"x1"', RequestData[i]) > 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                ParamValue := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                ParamValue := TrimJSON(ParamValue);
+                X1 := StrToFloat(ParamValue);
+            end
+            else if (Pos('"y1"', RequestData[i]) > 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                ParamValue := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                ParamValue := TrimJSON(ParamValue);
+                Y1 := StrToFloat(ParamValue);
+            end
+            else if (Pos('"x2"', RequestData[i]) > 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                ParamValue := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                ParamValue := TrimJSON(ParamValue);
+                X2 := StrToFloat(ParamValue);
+            end
+            else if (Pos('"y2"', RequestData[i]) > 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                ParamValue := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                ParamValue := TrimJSON(ParamValue);
+                Y2 := StrToFloat(ParamValue);
+            end
+            else if (Pos('"width"', RequestData[i]) > 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                ParamValue := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                ParamValue := TrimJSON(ParamValue);
+                Width := StrToFloat(ParamValue);
+            end
+            else if (Pos('"layer"', RequestData[i]) > 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                ParamValue := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                Layer := TrimJSON(ParamValue);
+            end
+            else if (Pos('"net_name"', RequestData[i]) > 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                ParamValue := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                NetName := TrimJSON(ParamValue);
+            end;
+        // REMOVED DUPLICATE END: end;
+
+        if Width > 0 then
+            Result := RouteTrace(X1, Y1, X2, Y2, Width, Layer, NetName)
+        else
+            Result := '{"success": false, "error": "Invalid trace width"}';
+    except
+        on E: Exception do
+            Result := '{"success": false, "error": "' + E.Message + '"}';
+    end;
+// REMOVED DUPLICATE END: end;
+
+function ExecuteAddVia(RequestData: TStringList): String;
+var
+    i, ValueStart: Integer;
+    ParamValue, StartLayer, EndLayer, NetName: String;
+    X, Y, Diameter, HoleSize: Double;
+begin
+    X := 0;
+    Y := 0;
+    Diameter := 0;
+    HoleSize := 0;
+    StartLayer := 'TopLayer';
+    EndLayer := 'BottomLayer';
+    NetName := '';
+
+    try
+        for i := 0 to RequestData.Count - 1 do
+        begin
+            if (Pos('"x"', RequestData[i]) > 0) and (Pos('"x1"', RequestData[i]) = 0) and (Pos('"x2"', RequestData[i]) = 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                ParamValue := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                ParamValue := TrimJSON(ParamValue);
+                X := StrToFloat(ParamValue);
+            end
+            else if (Pos('"y"', RequestData[i]) > 0) and (Pos('"y1"', RequestData[i]) = 0) and (Pos('"y2"', RequestData[i]) = 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                ParamValue := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                ParamValue := TrimJSON(ParamValue);
+                Y := StrToFloat(ParamValue);
+            end
+            else if (Pos('"diameter"', RequestData[i]) > 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                ParamValue := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                ParamValue := TrimJSON(ParamValue);
+                Diameter := StrToFloat(ParamValue);
+            end
+            else if (Pos('"hole_size"', RequestData[i]) > 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                ParamValue := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                ParamValue := TrimJSON(ParamValue);
+                HoleSize := StrToFloat(ParamValue);
+            end
+            else if (Pos('"start_layer"', RequestData[i]) > 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                ParamValue := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                StartLayer := TrimJSON(ParamValue);
+            end
+            else if (Pos('"end_layer"', RequestData[i]) > 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                ParamValue := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                EndLayer := TrimJSON(ParamValue);
+            end
+            else if (Pos('"net_name"', RequestData[i]) > 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                ParamValue := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                NetName := TrimJSON(ParamValue);
+            end;
+        // REMOVED DUPLICATE END: end;
+
+        if (Diameter > 0) and (HoleSize > 0) then
+            Result := AddVia(X, Y, Diameter, HoleSize, StartLayer, EndLayer, NetName)
+        else
+            Result := '{"success": false, "error": "Invalid via dimensions"}';
+    except
+        on E: Exception do
+            Result := '{"success": false, "error": "' + E.Message + '"}';
+    end;
+// REMOVED DUPLICATE END: end;
+
+function ExecuteAddCopperPour(RequestData: TStringList): String;
+var
+    i, ValueStart: Integer;
+    ParamValue, Layer, NetName: String;
+    X, Y, Width, Height: Double;
+    PourOverSameNet: Boolean;
+begin
+    X := 0;
+    Y := 0;
+    Width := 0;
+    Height := 0;
+    Layer := 'TopLayer';
+    NetName := '';
+    PourOverSameNet := True;
+
+    try
+        for i := 0 to RequestData.Count - 1 do
+        begin
+            if (Pos('"x"', RequestData[i]) > 0) and (Pos('"x1"', RequestData[i]) = 0) and (Pos('"x2"', RequestData[i]) = 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                ParamValue := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                ParamValue := TrimJSON(ParamValue);
+                X := StrToFloat(ParamValue);
+            end
+            else if (Pos('"y"', RequestData[i]) > 0) and (Pos('"y1"', RequestData[i]) = 0) and (Pos('"y2"', RequestData[i]) = 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                ParamValue := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                ParamValue := TrimJSON(ParamValue);
+                Y := StrToFloat(ParamValue);
+            end
+            else if (Pos('"width"', RequestData[i]) > 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                ParamValue := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                ParamValue := TrimJSON(ParamValue);
+                Width := StrToFloat(ParamValue);
+            end
+            else if (Pos('"height"', RequestData[i]) > 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                ParamValue := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                ParamValue := TrimJSON(ParamValue);
+                Height := StrToFloat(ParamValue);
+            end
+            else if (Pos('"layer"', RequestData[i]) > 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                ParamValue := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                Layer := TrimJSON(ParamValue);
+            end
+            else if (Pos('"net_name"', RequestData[i]) > 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                ParamValue := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                NetName := TrimJSON(ParamValue);
+            end
+            else if (Pos('"pour_over_same_net"', RequestData[i]) > 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                ParamValue := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                ParamValue := TrimJSON(ParamValue);
+                PourOverSameNet := (ParamValue = 'true');
+            end;
+        // REMOVED DUPLICATE END: end;
+
+        if (Width > 0) and (Height > 0) and (NetName <> '') then
+            Result := AddCopperPour(X, Y, Width, Height, Layer, NetName, PourOverSameNet)
+        else
+            Result := '{"success": false, "error": "Invalid copper pour parameters"}';
+    except
+        on E: Exception do
+            Result := '{"success": false, "error": "' + E.Message + '"}';
+    end;
+// REMOVED DUPLICATE END: end;
 
 // Function to execute a command with parameters
 function ExecuteCommand(CommandName: String): String;
 begin
     Result := '';
     EnsureDocumentFocused(CommandName);
-    
+
     // Direct command execution based on the command name
     case CommandName of
         'get_component_pins':
@@ -568,10 +1394,51 @@ begin
             Result := ExecuteGetOutputJobContainers(RequestData);
         'run_output_jobs':
             Result := ExecuteRunOutputJobs(RequestData);
+        'place_component':
+            Result := ExecutePlaceComponent(RequestData);
+        'delete_component':
+            Result := ExecuteDeleteComponent(RequestData);
+        'place_component_array':
+            Result := ExecutePlaceComponentArray(RequestData);
+        'align_components':
+            Result := ExecuteAlignComponents(RequestData);
+        // Phase 2: Project Management
+        'create_project':
+            Result := ExecuteCreateProject(RequestData);
+        'save_project':
+            Result := SaveProject;
+        'get_project_info':
+            Result := GetProjectInfo;
+        'close_project':
+            Result := CloseProject;
+        // Phase 2: Library Search
+        'list_component_libraries':
+            Result := ListComponentLibraries;
+        'search_components':
+            Result := ExecuteSearchComponents(RequestData);
+        'get_component_from_library':
+            Result := ExecuteGetComponentFromLibrary(RequestData);
+        'search_footprints':
+            Result := ExecuteSearchFootprints(RequestData);
+        // Phase 5: Board & Routing
+        'set_board_size':
+            Result := ExecuteSetBoardSize(RequestData);
+        'add_board_outline':
+            Result := ExecuteAddBoardOutline(RequestData);
+        'add_mounting_hole':
+            Result := ExecuteAddMountingHole(RequestData);
+        'add_board_text':
+            Result := ExecuteAddBoardText(RequestData);
+        'route_trace':
+            Result := ExecuteRouteTrace(RequestData);
+        'add_via':
+            Result := ExecuteAddVia(RequestData);
+        'add_copper_pour':
+            Result := ExecuteAddCopperPour(RequestData);
     else
         ShowMessage('Error: Unknown command: ' + CommandName);
     end;
-end;
+// REMOVED DUPLICATE END: end;
 
 // Function to extract a parameter name-value pair from a JSON line
 procedure ExtractParameter(Line: String);
@@ -652,7 +1519,7 @@ begin
         ResultProps.Free;
         ResponseData.Free;
     end;
-end;
+// REMOVED DUPLICATE END: end;
 
 // Main procedure to run the bridge
 procedure Run;
@@ -703,7 +1570,7 @@ begin
                     // Extract all other parameters
                     ExtractParameter(Line);
                 end;
-            end;
+            // REMOVED DUPLICATE END: end;
 
             // Execute the command if valid
             if CommandType <> '' then
@@ -719,7 +1586,7 @@ begin
                     WriteResponse(False, '', 'Command execution failed');
                     ShowMessage('Error: Command execution failed');
                 end;
-            end
+            // REMOVED DUPLICATE END: end
             else
             begin
                 WriteResponse(False, '', 'No command specified');
@@ -734,6 +1601,6 @@ begin
         WriteResponse(False, '', 'Exception occurred during script execution');
         ShowMessage('Error: Exception occurred during script execution');
     end;
-end;
+// REMOVED DUPLICATE END: end;
 
 

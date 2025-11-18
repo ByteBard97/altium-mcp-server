@@ -19,11 +19,17 @@ from altium_bridge import AltiumBridge
 from resources import register_project_resources, register_board_resources
 from tools import (
     register_component_tools,
+    register_component_ops_tools,
     register_net_tools,
     register_layer_tools,
     register_schematic_tools,
     register_layout_tools,
-    register_output_tools
+    register_output_tools,
+    register_project_tools,
+    register_library_tools,
+    register_analysis_tools,
+    register_board_tools,
+    register_routing_tools
 )
 from prompts import register_workflow_prompts
 
@@ -64,11 +70,17 @@ register_board_resources(mcp, altium_bridge)
 # ============================================================================
 logger.info("Registering tools...")
 register_component_tools(mcp, altium_bridge)
+register_component_ops_tools(mcp, altium_bridge)
 register_net_tools(mcp, altium_bridge)
 register_layer_tools(mcp, altium_bridge)
 register_schematic_tools(mcp, altium_bridge)
 register_layout_tools(mcp, altium_bridge)
 register_output_tools(mcp, altium_bridge)
+register_project_tools(mcp, altium_bridge)
+register_library_tools(mcp, altium_bridge)
+register_analysis_tools(mcp, altium_bridge)
+register_board_tools(mcp, altium_bridge)
+register_routing_tools(mcp, altium_bridge)
 
 # ============================================================================
 # REGISTER PROMPTS - Guided workflows
