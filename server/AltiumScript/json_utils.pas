@@ -1,3 +1,29 @@
+// json_utils.pas
+// JSON utility functions for Altium MCP Bridge
+
+unit json_utils;
+
+interface
+
+uses
+    Classes, SysUtils;
+
+function TrimJSON(InputStr: String): String;
+function JSONEscapeString(const S: String): String;
+function JSONPairStr(const Name, Value: String; IsString: Boolean): String;
+function BuildJSONObject(Pairs: TStringList; IndentLevel: Integer = 0): String;
+function BuildJSONArray(Items: TStringList; ArrayName: String = ''; IndentLevel: Integer = 0): String;
+function WriteJSONToFile(JSON: TStringList; FileName: String = ''): String;
+procedure AddJSONProperty(List: TStringList; Name: String; Value: String; IsString: Boolean = True);
+procedure AddJSONNumber(List: TStringList; Name: String; Value: Double);
+procedure AddJSONInteger(List: TStringList; Name: String; Value: Integer);
+procedure AddJSONBoolean(List: TStringList; Name: String; Value: Boolean);
+
+implementation
+
+const
+    REPLACEALL = 1;
+
 // Helper function to remove characters from a string
 function RemoveChar(const S: String; C: Char): String;
 var
@@ -8,8 +34,6 @@ begin
     if S[I] <> C then
       Result := Result + S[I];
 end;
-
-// JSON utility functions for Altium MCP Bridge
 
 function TrimJSON(InputStr: String): String;
 begin
@@ -69,7 +93,7 @@ begin
     finally
         Output.Free;
     end;
-// REMOVED DUPLICATE END: end;
+end;
 
 // Function to build a JSON array from a list of items
 function BuildJSONArray(Items: TStringList; ArrayName: String = ''; IndentLevel: Integer = 0): String;
@@ -103,7 +127,7 @@ begin
     finally
         Output.Free;
     end;
-// REMOVED DUPLICATE END: end;
+end;
 
 // Function to write JSON to a file and return as string
 function WriteJSONToFile(JSON: TStringList; FileName: String = ''): String;
@@ -113,7 +137,12 @@ begin
     // Use provided filename or generate temp filename
     if Not(AnsiEndsStr('.json', LowerCase(FileName))) then
     begin
-        TempFile := Path + 'temp_json_output.json';
+        // Note: Path is not defined here, assuming it's handled by caller or global context
+        // For safety, we'll just use the filename if provided, or error if not
+        if FileName <> '' then
+            TempFile := FileName
+        else
+            TempFile := 'temp_json_output.json'; 
     end
     else
     begin
@@ -135,7 +164,7 @@ begin
     except
         Result := '{"error": "Failed to write JSON to file"}';
     end;
-// REMOVED DUPLICATE END: end;
+end;
 
 // Helper function to add a simple property to a JSON object
 procedure AddJSONProperty(List: TStringList; Name: String; Value: String; IsString: Boolean = True);
@@ -163,3 +192,5 @@ begin
     else
         List.Add(JSONPairStr(Name, 'false', False));
 end;
+
+end.

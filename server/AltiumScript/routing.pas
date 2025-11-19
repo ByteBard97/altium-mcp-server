@@ -72,8 +72,8 @@ begin
                             Board.AddPCBObject(Net);
                             Track.Net := Net;
                         end;
-                    // REMOVED DUPLICATE END: end;
-                // REMOVED DUPLICATE END: end;
+                    end;
+                end;
 
                 Board.AddPCBObject(Track);
                 PCBServer.SendMessageToRobots(Board.I_ObjectAddress, c_Broadcast, PCBM_BoardRegisteration, Track.I_ObjectAddress);
@@ -108,8 +108,8 @@ begin
         end;
     finally
         ResultProps.Free;
-    // REMOVED EXTRA END: end;
-// REMOVED DUPLICATE END: end;
+    end;
+end;
 
 {..............................................................................}
 { Add Via - Place a via at coordinates                                        }
@@ -190,8 +190,8 @@ begin
                             Board.AddPCBObject(Net);
                             Via.Net := Net;
                         end;
-                    // REMOVED DUPLICATE END: end;
-                // REMOVED DUPLICATE END: end;
+                    end;
+                end;
 
                 Board.AddPCBObject(Via);
                 PCBServer.SendMessageToRobots(Board.I_ObjectAddress, c_Broadcast, PCBM_BoardRegisteration, Via.I_ObjectAddress);
@@ -228,8 +228,8 @@ begin
         end;
     finally
         ResultProps.Free;
-    // REMOVED EXTRA END: end;
-// REMOVED DUPLICATE END: end;
+    end;
+end;
 
 {..............................................................................}
 { Add Copper Pour - Create a filled polygon zone                              }
@@ -330,8 +330,8 @@ begin
                             Board.AddPCBObject(Net);
                             Polygon.Net := Net;
                         end;
-                    // REMOVED DUPLICATE END: end;
-                // REMOVED DUPLICATE END: end;
+                    end;
+                end;
 
                 // Rebuild polygon to apply pour
                 Polygon.Rebuild;
@@ -369,5 +369,5 @@ begin
         end;
     finally
         ResultProps.Free;
-    // REMOVED EXTRA END: end;
-// REMOVED DUPLICATE END: end;
+    end;
+end;

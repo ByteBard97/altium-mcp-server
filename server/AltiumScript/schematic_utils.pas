@@ -142,8 +142,8 @@ begin
                     Pin := PinIterator.NextSchObject;
                 finally
                     PinProps.Free;
-                // REMOVED EXTRA END: end;
-            // REMOVED DUPLICATE END: end;
+                end;
+            end;
             
             SchComponent.SchIterator_Destroy(PinIterator);
             
@@ -159,14 +159,14 @@ begin
                 Result := WriteJSONToFile(OutputLines, ROOT_DIR+'temp_symbol_reference.json');
             finally
                 OutputLines.Free;
-            // REMOVED EXTRA END: end;
+            end;
         finally
             PinsArray.Free;
-        // REMOVED EXTRA END: end;
+        end;
     finally
         ComponentProps.Free;
-    // REMOVED EXTRA END: end;
-// REMOVED DUPLICATE END: end;
+    end;
+end;
 
 function CreateSchematicSymbol(SymbolName: String; PinsList: TStringList): String;
 var
@@ -207,7 +207,7 @@ begin
             Description := Copy(PinsList[I], 13, Length(PinsList[I]) - 12);
             Break;
         end;
-    // REMOVED DUPLICATE END: end;
+    end;
 
     // Create a library component (a page of the library is created)
     SchComponent := SchServer.SchObjectFactory(eSchComponent, eCreate_Default);
@@ -259,7 +259,7 @@ begin
         finally
             PinData.Free;
         end;
-    // REMOVED DUPLICATE END: end;
+    end;
 
     // Set rectangle to cover all pins with padding
     if (PinCount = 0) then
@@ -344,7 +344,7 @@ begin
         finally
             PinData.Free;
         end;
-    // REMOVED DUPLICATE END: end;
+    end;
 
     // Add the component to the library
     CurrentLib.AddSchComponent(SchComponent);
@@ -374,7 +374,7 @@ begin
     finally
         ResultProps.Free;
     end;
-// REMOVED DUPLICATE END: end;
+end;
 
 // Function to get all schematic component data
 function GetSchematicData(ROOT_DIR: String): String;
@@ -525,8 +525,8 @@ begin
 
                     CurrentSch.SchIterator_Destroy(Iterator);
                 End;
-            // REMOVED DUPLICATE END: End;
-        // REMOVED DUPLICATE END: End;
+            End;
+        End;
         
         // Build the final JSON array
         OutputLines := TStringList.Create;
@@ -538,5 +538,5 @@ begin
         end;
     finally
         ComponentsArray.Free;
-    // REMOVED EXTRA END: end;
-// REMOVED DUPLICATE END: end;
+    end;
+end;

@@ -39,7 +39,7 @@ begin
             AddJSONProperty(ResultProps, 'height', FloatToStr(Height) + 'mm');
         finally
             PCBServer.PostProcess;
-        // REMOVED EXTRA END: end;
+        end;
 
         // Refresh view
         Client.SendMessage('PCB:Zoom', 'Action=Redraw', 255, Client.CurrentView);
@@ -50,11 +50,11 @@ begin
             Result := OutputLines.Text;
         finally
             OutputLines.Free;
-        // REMOVED EXTRA END: end;
+        end;
     finally
         ResultProps.Free;
-    // REMOVED EXTRA END: end;
-// REMOVED DUPLICATE END: end;
+    end;
+end;
 
 {..............................................................................}
 { Add Board Outline - Draw rectangular board outline                          }
@@ -118,7 +118,7 @@ begin
                     Board.AddPCBObject(Track);
                     PCBServer.SendMessageToRobots(Board.I_ObjectAddress, c_Broadcast, PCBM_BoardRegisteration, Track.I_ObjectAddress);
                 end;
-            // REMOVED DUPLICATE END: end;
+            end;
 
             AddJSONBoolean(ResultProps, 'success', True);
             AddJSONProperty(ResultProps, 'message', 'Board outline added');
@@ -139,11 +139,11 @@ begin
             Result := OutputLines.Text;
         finally
             OutputLines.Free;
-        // REMOVED EXTRA END: end;
+        end;
     finally
         ResultProps.Free;
-    // REMOVED EXTRA END: end;
-// REMOVED DUPLICATE END: end;
+    end;
+end;
 
 {..............................................................................}
 { Add Mounting Hole - Add a mounting hole at specified position               }
@@ -222,7 +222,7 @@ begin
             end;
         finally
             PCBServer.PostProcess;
-        // REMOVED EXTRA END: end;
+        end;
 
         // Refresh view
         Client.SendMessage('PCB:Zoom', 'Action=Redraw', 255, Client.CurrentView);
@@ -233,11 +233,11 @@ begin
             Result := OutputLines.Text;
         finally
             OutputLines.Free;
-        // REMOVED EXTRA END: end;
+        end;
     finally
         ResultProps.Free;
-    // REMOVED EXTRA END: end;
-// REMOVED DUPLICATE END: end;
+    end;
+end;
 
 {..............................................................................}
 { Add Board Text - Add text string to the board                               }
@@ -311,7 +311,7 @@ begin
             end;
         finally
             PCBServer.PostProcess;
-        // REMOVED EXTRA END: end;
+        end;
 
         // Refresh view
         Client.SendMessage('PCB:Zoom', 'Action=Redraw', 255, Client.CurrentView);
@@ -322,8 +322,8 @@ begin
             Result := OutputLines.Text;
         finally
             OutputLines.Free;
-        // REMOVED EXTRA END: end;
+        end;
     finally
         ResultProps.Free;
-    // REMOVED EXTRA END: end;
-// REMOVED DUPLICATE END: end;
+    end;
+end;

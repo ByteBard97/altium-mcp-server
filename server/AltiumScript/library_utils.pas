@@ -3,6 +3,20 @@
 { Functions for searching components and footprints in loaded libraries        }
 {..............................................................................}
 
+unit library_utils;
+
+interface
+
+uses
+    Classes, SysUtils, PCB, SCH;
+
+function ListComponentLibraries: String;
+function SearchComponents(const Query: String): String;
+function GetComponentFromLibrary(const LibraryName, ComponentName: String): String;
+function SearchFootprints(const Query: String): String;
+
+implementation
+
 {..............................................................................}
 { ListComponentLibraries - List all available component libraries              }
 {..............................................................................}
@@ -78,24 +92,25 @@ begin
 
                                     LibCount := LibCount + 1;
                                 end;
-end;
-end;
-end;
-end;
-end;
+                            end;
+                        end;
+                    end;
+                end;
+            end;
+
             JsonBuilder.Add('  ]');
             JsonBuilder.Add('}');
 
             Result := JsonBuilder.Text;
         except
-            on E: Exception do
-            begin
-                Result := '{"success": false, "error": "' + E.Message + '"}';
-            end;
-end;
+            Result := '{"success": false, "error": "' + ExceptionMessage + '"}';
+        end;
     finally
         JsonBuilder.Free;
         AddedLibs.Free;
+    end;
+end;
+
 {..............................................................................}
 { SearchComponents - Search for components across all loaded libraries         }
 {..............................................................................}
@@ -177,26 +192,27 @@ begin
 
                                             MatchCount := MatchCount + 1;
                                         end;
-end;
-end;
-end;
-end;
-end;
-end;
-end;
+                                    end;
+                                end;
+                            end;
+                        end;
+                    end;
+                end;
+            end;
+
             JsonBuilder.Add('  ],');
             JsonBuilder.Add('  "match_count": ' + IntToStr(MatchCount));
             JsonBuilder.Add('}');
 
             Result := JsonBuilder.Text;
         except
-            on E: Exception do
-            begin
-                Result := '{"success": false, "error": "' + E.Message + '"}';
-            end;
-end;
+            Result := '{"success": false, "error": "' + ExceptionMessage + '"}';
+        end;
     finally
         JsonBuilder.Free;
+    end;
+end;
+
 {..............................................................................}
 { GetComponentFromLibrary - Get detailed information about a component         }
 {..............................................................................}
@@ -274,12 +290,13 @@ begin
 
                                         Break;
                                     end;
-end;
-end;
-end;
-end;
-end;
-end;
+                                end;
+                            end;
+                        end;
+                    end;
+                end;
+            end;
+
             if not Found then
             begin
                 Result := '{"success": false, "error": "Component not found: ' + ComponentName + ' in library: ' + LibraryName + '"}';
@@ -288,13 +305,13 @@ end;
 
             Result := JsonBuilder.Text;
         except
-            on E: Exception do
-            begin
-                Result := '{"success": false, "error": "' + E.Message + '"}';
-            end;
-end;
+            Result := '{"success": false, "error": "' + ExceptionMessage + '"}';
+        end;
     finally
         JsonBuilder.Free;
+    end;
+end;
+
 {..............................................................................}
 { SearchFootprints - Search for footprints across all loaded PCB libraries     }
 {..............................................................................}
@@ -373,23 +390,25 @@ begin
 
                                             MatchCount := MatchCount + 1;
                                         end;
-end;
-end;
-end;
-end;
-end;
-end;
-end;
+                                    end;
+                                end;
+                            end;
+                        end;
+                    end;
+                end;
+            end;
+
             JsonBuilder.Add('  ],');
             JsonBuilder.Add('  "match_count": ' + IntToStr(MatchCount));
             JsonBuilder.Add('}');
 
             Result := JsonBuilder.Text;
         except
-            on E: Exception do
-            begin
-                Result := '{"success": false, "error": "' + E.Message + '"}';
-            end;
-end;
+            Result := '{"success": false, "error": "' + ExceptionMessage + '"}';
+        end;
     finally
         JsonBuilder.Free;
+    end;
+end;
+
+end.

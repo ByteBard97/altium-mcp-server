@@ -3,6 +3,20 @@
 { Functions for creating, saving, and managing Altium projects                 }
 {..............................................................................}
 
+unit project_utils;
+
+interface
+
+uses
+    Classes, SysUtils, PCB;
+
+function CreateProject(const ProjectName, ProjectPath, Template: String): String;
+function SaveProject: String;
+function GetProjectInfo: String;
+function CloseProject: String;
+
+implementation
+
 {..............................................................................}
 { CreateProject - Create a new Altium project with a blank PCB document        }
 {..............................................................................}
@@ -65,13 +79,13 @@ begin
 
             Result := JsonBuilder.Text;
         except
-            on E: Exception do
-            begin
-                Result := '{"success": false, "error": "' + E.Message + '"}';
-            end;
-end;
+            Result := '{"success": false, "error": "' + ExceptionMessage + '"}';
+        end;
     finally
         JsonBuilder.Free;
+    end;
+end;
+
 {..............................................................................}
 { SaveProject - Save the currently open project                                }
 {..............................................................................}
@@ -120,13 +134,13 @@ begin
 
             Result := JsonBuilder.Text;
         except
-            on E: Exception do
-            begin
-                Result := '{"success": false, "error": "' + E.Message + '"}';
-            end;
-end;
+            Result := '{"success": false, "error": "' + ExceptionMessage + '"}';
+        end;
     finally
         JsonBuilder.Free;
+    end;
+end;
+
 {..............................................................................}
 { GetProjectInfo - Get detailed information about the currently open project   }
 {..............................................................................}
@@ -175,7 +189,8 @@ begin
                     else
                         OtherCount := OtherCount + 1;
                 end;
-end;
+            end;
+
             // Build response
             JsonBuilder.Add('{');
             JsonBuilder.Add('  "success": true,');
@@ -189,13 +204,13 @@ end;
 
             Result := JsonBuilder.Text;
         except
-            on E: Exception do
-            begin
-                Result := '{"success": false, "error": "' + E.Message + '"}';
-            end;
-end;
+            Result := '{"success": false, "error": "' + ExceptionMessage + '"}';
+        end;
     finally
         JsonBuilder.Free;
+    end;
+end;
+
 {..............................................................................}
 { CloseProject - Close the currently open project                              }
 {..............................................................................}
@@ -237,10 +252,11 @@ begin
 
             Result := JsonBuilder.Text;
         except
-            on E: Exception do
-            begin
-                Result := '{"success": false, "error": "' + E.Message + '"}';
-            end;
-end;
+            Result := '{"success": false, "error": "' + ExceptionMessage + '"}';
+        end;
     finally
         JsonBuilder.Free;
+    end;
+end;
+
+end.

@@ -1,8 +1,19 @@
 // component_placement.pas
 // Functions for placing, deleting, and manipulating components on PCB boards
 
+unit component_placement;
+
+interface
+
 uses
-    PCB;
+    Classes, SysUtils, PCB, json_utils;
+
+function PlaceComponent(const Designator, Footprint: String; const X, Y: Double; const Layer, Rotation: Integer): String;
+function DeleteComponent(const Designator: String): String;
+function PlaceComponentArray(const Footprint, RefDes: String; const StartX, StartY, SpacingX, SpacingY: Double; const Rows, Cols: Integer): String;
+function AlignComponents(const DesignatorsStr: String; const Alignment: String): String;
+
+implementation
 
 {..............................................................................}
 { Helper function to find a footprint in loaded libraries                     }
@@ -50,13 +61,16 @@ begin
                         );
                         Exit;
                     end;
-end;
+                end;
+
                 CompInfo := CompInfoIter.NextComponent;
             end;
-end;
+        end;
     except
         Result := nil;
     end;
+end;
+
 {..............................................................................}
 { Helper function to copy primitives from library footprint to component      }
 {..............................................................................}
@@ -88,6 +102,8 @@ begin
     except
         Result := False;
     end;
+end;
+
 {..............................................................................}
 { Place a single component on the PCB                                         }
 {..............................................................................}
@@ -177,9 +193,10 @@ begin
         Client.SendMessage('PCB:Zoom', 'Action=Redraw', 255, Client.CurrentView);
 
     except
-        on E: Exception do
-            Result := '{"success": false, "error": "' + E.Message + '"}';
+            Result := '{"success": false, "error": "' + ExceptionMessage + '"}';
+    end;
     JsonResult.Free;
+end;
 
 {..............................................................................}
 { Delete a component by designator                                            }
@@ -221,8 +238,10 @@ begin
         Client.SendMessage('PCB:Zoom', 'Action=Redraw', 255, Client.CurrentView);
 
     except
-        on E: Exception do
-            Result := '{"success": false, "error": "' + E.Message + '"}';
+            Result := '{"success": false, "error": "' + ExceptionMessage + '"}';
+    end;
+end;
+
 {..............................................................................}
 { Place an array of components in a grid pattern                              }
 {..............................................................................}
@@ -268,7 +287,8 @@ begin
 
                 ComponentCount := ComponentCount + 1;
             end;
-end;
+        end;
+
         JsonBuilder.Add('  ]');
         JsonBuilder.Add('}');
 
@@ -276,6 +296,8 @@ end;
     finally
         JsonBuilder.Free;
     end;
+end;
+
 {..............................................................................}
 { Align multiple components to a common edge                                  }
 {..............................................................................}
@@ -324,7 +346,8 @@ begin
                 Result := '{"success": false, "error": "Component not found: ' + Designator + '"}';
                 Exit;
             end;
-end;
+        end;
+
         // Calculate alignment coordinate based on alignment type
         if Alignment = 'left' then
         begin
@@ -387,8 +410,11 @@ end;
         Result := JsonResult.Text;
 
     except
-        on E: Exception do
-            Result := '{"success": false, "error": "' + E.Message + '"}';
+        Result := '{"success": false, "error": "' + ExceptionMessage + '"}';
+    end;
 
     JsonResult.Free;
     DesignatorsList.Free;
+end;
+
+end.
