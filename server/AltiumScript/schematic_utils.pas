@@ -1,3 +1,19 @@
+// schematic_utils.pas
+// Schematic utility functions for Altium
+
+unit schematic_utils;
+
+interface
+
+uses
+    Classes, SysUtils, SCH, json_utils, Math;
+
+function GetLibrarySymbolReference(ROOT_DIR: String): String;
+function CreateSchematicSymbol(SymbolName: String; PinsList: TStringList): String;
+function GetSchematicData(ROOT_DIR: String): String;
+
+implementation
+
 // Helper function to convert string to pin electrical type
 function StrToPinElectricalType(ElecType: String): TPinElectrical;
 begin
@@ -540,3 +556,5 @@ begin
         ComponentsArray.Free;
     end;
 end;
+
+end.
