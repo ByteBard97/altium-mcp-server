@@ -51,6 +51,7 @@ var
     ActualSuccess: Boolean;
     ActualErrorMsg: String;
     ResultProps: TStringList;
+    Response: TStringList;
 begin
     // Check if Data contains an error message
     if (Pos('ERROR:', Data) = 1) then
@@ -66,7 +67,7 @@ begin
 
     // Create response props
     ResultProps := TStringList.Create;
-    ResponseData := TStringList.Create;
+    Response := TStringList.Create;
 
     try
         // Add properties
@@ -86,11 +87,11 @@ begin
         end;
 
         // Build response
-        ResponseData.Text := BuildJSONObject(ResultProps);
-        ResponseData.SaveToFile(RESPONSE_FILE);
+        Response.Text := BuildJSONObject(ResultProps);
+        Response.SaveToFile(RESPONSE_FILE);
     finally
         ResultProps.Free;
-        ResponseData.Free;
+        Response.Free;
     end;
 end;
 
