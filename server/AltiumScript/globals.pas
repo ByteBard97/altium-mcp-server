@@ -10,7 +10,6 @@ uses
 
 const
     constScriptProjectName = 'Altium_API';
-    REPLACEALL = 1;
 
 var
     RequestData : TStringList;
