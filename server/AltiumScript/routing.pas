@@ -1,6 +1,19 @@
 // routing.pas
 // Routing functions for Altium PCB
 
+unit routing;
+
+interface
+
+uses
+    Classes, SysUtils, PCB, json_utils;
+
+function RouteTrace(X1, Y1, X2, Y2, Width: Double; Layer: String; NetName: String): String;
+function AddVia(X, Y, Diameter, HoleSize: Double; StartLayer, EndLayer: String; NetName: String): String;
+function AddCopperPour(X, Y, Width, Height: Double; Layer: String; NetName: String; PourOverSameNet: Boolean): String;
+
+implementation
+
 {..............................................................................}
 { Route Trace - Route a trace between two points on a layer                   }
 {..............................................................................}
@@ -371,3 +384,5 @@ begin
         ResultProps.Free;
     end;
 end;
+
+end.

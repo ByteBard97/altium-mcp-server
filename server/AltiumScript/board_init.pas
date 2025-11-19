@@ -1,6 +1,20 @@
 // board_init.pas
 // Board initialization functions for Altium PCB
 
+unit board_init;
+
+interface
+
+uses
+    Classes, SysUtils, PCB, json_utils;
+
+function SetBoardSize(Width, Height: Double): String;
+function AddBoardOutline(X, Y, Width, Height: Double): String;
+function AddMountingHole(X, Y, HoleDiameter, PadDiameter: Double): String;
+function AddBoardText(Text: String; X, Y, Size: Double; Layer: String): String;
+
+implementation
+
 {..............................................................................}
 { Set Board Size - Set the dimensions of the PCB board                        }
 {..............................................................................}
@@ -327,3 +341,5 @@ begin
         ResultProps.Free;
     end;
 end;
+
+end.
