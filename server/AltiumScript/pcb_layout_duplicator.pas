@@ -1,3 +1,18 @@
+// pcb_layout_duplicator.pas
+// Functions for duplicating PCB layouts
+
+unit pcb_layout_duplicator;
+
+interface
+
+uses
+    Classes, SysUtils, PCB, json_utils, globals;
+
+function GetLayoutDuplicatorComponents(SelectedOnly: Boolean = True): String;
+function ApplyLayoutDuplicator(SourceList: TStringList; DestList: TStringList): String;
+
+implementation
+
 // Function to duplicate selected objects of a specific type
 function DuplicateSelectedObjects(Board: IPCB_Board; ObjectSet: TSet): TObjectList;
 var
@@ -756,3 +771,5 @@ begin
         ResultProps.Free;
     end;
 end;
+
+end.

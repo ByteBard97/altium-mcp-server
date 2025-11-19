@@ -1,3 +1,18 @@
+// other_utils.pas
+// Other utility functions for Altium
+
+unit other_utils;
+
+interface
+
+uses
+    Classes, SysUtils, PCB, SCH;
+
+function ScriptProjectPath(Workspace: IWorkspace): String;
+function EnsureDocumentFocused(CommandName: String): Boolean;
+
+implementation
+
 const
     DEFAULT = 'Blank';
 
@@ -5,7 +20,7 @@ const
 { Get path of this script project.                                             }
 { Get prj path from Jeff Collins and William Kitchen's stripped down version   }
 {..............................................................................}
-function ScriptProjectPath(Workspace: IWorkspace) : String;
+function ScriptProjectPath(Workspace: IWorkspace): String;
 var
   Project   : IProject;
   scriptsPath : TDynamicString;
@@ -658,3 +673,5 @@ begin
         end;
     end;
 end;
+
+end.
