@@ -6,13 +6,13 @@ unit pcb_utils;
 interface
 
 uses
-    Classes, SysUtils, PCB, json_utils;
+    Classes, SysUtils, PCB, json_utils, globals;
 
 function GetAllNets(ROOT_DIR: String): String;
-function CreateNetClass(ClassName: String; NetNamesList: TStringList): String;
+function CreatePCBNetClass(ClassName: String; NetNamesList: TStringList): String;
 function GetPCBLayerStackup(ROOT_DIR: String): String;
 function GetPCBLayers(ROOT_DIR: String): String;
-function SetPCBLayerVisibility(LayerName: String; IsVisible: Boolean): String;
+function SetPCBLayerVisibility(LayerNamesList: TStringList; Visible: Boolean): String;
 function GetDesignRules(ROOT_DIR: String): String;
 function GetAllComponentData(ROOT_DIR: String; SelectedOnly: Boolean = False): String;
 function GetSelectedComponentsCoordinates(ROOT_DIR: String): String;
@@ -24,10 +24,66 @@ implementation
 // Helper function to convert layer object to string
 function Layer2String(Layer: TLayer): String;
 begin
-    Result := Layer2String(Layer); // Use built-in function if available, otherwise we might need to implement mapping
-    // Note: In Altium DelphiScript, Layer2String is a built-in function.
-    // If it's not available in the context, we might need to map it manually.
-    // For now assuming it's available as it was used in the original script.
+    if Layer = eTopLayer then Result := 'TopLayer'
+    else if Layer = eBottomLayer then Result := 'BottomLayer'
+    else if Layer = eTopOverlay then Result := 'TopOverlay'
+    else if Layer = eBottomOverlay then Result := 'BottomOverlay'
+    else if Layer = eMidLayer1 then Result := 'MidLayer1'
+    else if Layer = eMidLayer2 then Result := 'MidLayer2'
+    else if Layer = eMidLayer3 then Result := 'MidLayer3'
+    else if Layer = eMidLayer4 then Result := 'MidLayer4'
+    else if Layer = eMidLayer5 then Result := 'MidLayer5'
+    else if Layer = eMidLayer6 then Result := 'MidLayer6'
+    else if Layer = eMidLayer7 then Result := 'MidLayer7'
+    else if Layer = eMidLayer8 then Result := 'MidLayer8'
+    else if Layer = eMidLayer9 then Result := 'MidLayer9'
+    else if Layer = eMidLayer10 then Result := 'MidLayer10'
+    else if Layer = eMidLayer11 then Result := 'MidLayer11'
+    else if Layer = eMidLayer12 then Result := 'MidLayer12'
+    else if Layer = eMidLayer13 then Result := 'MidLayer13'
+    else if Layer = eMidLayer14 then Result := 'MidLayer14'
+    else if Layer = eMidLayer15 then Result := 'MidLayer15'
+    else if Layer = eMidLayer16 then Result := 'MidLayer16'
+    else if Layer = eMidLayer17 then Result := 'MidLayer17'
+    else if Layer = eMidLayer18 then Result := 'MidLayer18'
+    else if Layer = eMidLayer19 then Result := 'MidLayer19'
+    else if Layer = eMidLayer20 then Result := 'MidLayer20'
+    else if Layer = eMidLayer21 then Result := 'MidLayer21'
+    else if Layer = eMidLayer22 then Result := 'MidLayer22'
+    else if Layer = eMidLayer23 then Result := 'MidLayer23'
+    else if Layer = eMidLayer24 then Result := 'MidLayer24'
+    else if Layer = eMidLayer25 then Result := 'MidLayer25'
+    else if Layer = eMidLayer26 then Result := 'MidLayer26'
+    else if Layer = eMidLayer27 then Result := 'MidLayer27'
+    else if Layer = eMidLayer28 then Result := 'MidLayer28'
+    else if Layer = eMidLayer29 then Result := 'MidLayer29'
+    else if Layer = eMidLayer30 then Result := 'MidLayer30'
+    else if Layer = eMultiLayer then Result := 'MultiLayer'
+    else if Layer = eKeepOutLayer then Result := 'KeepOutLayer'
+    else if Layer = eMechanical1 then Result := 'Mechanical1'
+    else if Layer = eMechanical2 then Result := 'Mechanical2'
+    else if Layer = eMechanical3 then Result := 'Mechanical3'
+    else if Layer = eMechanical4 then Result := 'Mechanical4'
+    else if Layer = eMechanical5 then Result := 'Mechanical5'
+    else if Layer = eMechanical6 then Result := 'Mechanical6'
+    else if Layer = eMechanical7 then Result := 'Mechanical7'
+    else if Layer = eMechanical8 then Result := 'Mechanical8'
+    else if Layer = eMechanical9 then Result := 'Mechanical9'
+    else if Layer = eMechanical10 then Result := 'Mechanical10'
+    else if Layer = eMechanical11 then Result := 'Mechanical11'
+    else if Layer = eMechanical12 then Result := 'Mechanical12'
+    else if Layer = eMechanical13 then Result := 'Mechanical13'
+    else if Layer = eMechanical14 then Result := 'Mechanical14'
+    else if Layer = eMechanical15 then Result := 'Mechanical15'
+    else if Layer = eMechanical16 then Result := 'Mechanical16'
+    else if Layer = eSolderMaskTop then Result := 'SolderMaskTop'
+    else if Layer = eSolderMaskBottom then Result := 'SolderMaskBottom'
+    else if Layer = ePasteMaskTop then Result := 'PasteMaskTop'
+    else if Layer = ePasteMaskBottom then Result := 'PasteMaskBottom'
+    else if Layer = eDrillGuide then Result := 'DrillGuide'
+    else if Layer = eKeepOutLayer then Result := 'KeepOutLayer'
+    else if Layer = eDrillDrawing then Result := 'DrillDrawing'
+    else Result := 'Unknown';
 end;
 
 // Helper function to convert shape to string
@@ -56,7 +112,7 @@ var
     OutputLines : TStringList;
 begin
     // Retrieve the current board
-    Board := PCBServer.GetCurrentPCBBoard;
+    Board := GetPCBServer.GetCurrentPCBBoard;
     if (Board = nil) then
     begin
         Result := '[]';
@@ -112,7 +168,7 @@ end;
 {..............................................................................}
 { Create Net Class - Create a class of nets                                   }
 {..............................................................................}
-function CreateNetClass(ClassName: String; NetNamesList: TStringList): String;
+function CreatePCBNetClass(ClassName: String; NetNamesList: TStringList): String;
 var
     Board       : IPCB_Board;
     NetClass    : IPCB_ObjectClass;
@@ -124,7 +180,7 @@ var
     SuccessCount: Integer;
 begin
     // Retrieve the current board
-    Board := PCBServer.GetCurrentPCBBoard;
+    Board := GetPCBServer.GetCurrentPCBBoard;
     if (Board = nil) then
     begin
         Result := '{"success": false, "error": "No PCB document is currently active"}';
@@ -135,7 +191,7 @@ begin
     SuccessCount := 0;
     
     try
-        PCBServer.PreProcess;
+        GetPCBServer.PreProcess;
         try
             // Check if class already exists
             NetClass := Board.GetObjectClassByName(ClassName);
@@ -143,7 +199,7 @@ begin
             // If not, create it
             if (NetClass = nil) then
             begin
-                NetClass := PCBServer.PCBObjectFactory(eClassObject, eNoDimension, eCreate_Default);
+                NetClass := GetPCBServer.PCBObjectFactory(eClassObject, eNoDimension, eCreate_Default);
                 NetClass.Name := ClassName;
                 NetClass.Kind := eNetClass;
                 Board.AddPCBObject(NetClass);
@@ -166,7 +222,7 @@ begin
             AddJSONProperty(ResultProps, 'class_name', ClassName);
             AddJSONInteger(ResultProps, 'nets_added', SuccessCount);
         finally
-            PCBServer.PostProcess;
+            GetPCBServer.PostProcess;
         end;
         
         // Build final JSON
@@ -195,7 +251,7 @@ var
     OutputLines : TStringList;
 begin
     // Retrieve the current board
-    Board := PCBServer.GetCurrentPCBBoard;
+    Board := GetPCBServer.GetCurrentPCBBoard;
     if (Board = nil) then
     begin
         Result := '[]';
@@ -257,7 +313,7 @@ var
     OutputLines : TStringList;
 begin
     // Retrieve the current board
-    Board := PCBServer.GetCurrentPCBBoard;
+    Board := GetPCBServer.GetCurrentPCBBoard;
     if (Board = nil) then
     begin
         Result := '[]';
@@ -294,7 +350,7 @@ end;
 {..............................................................................}
 { Set PCB Layer Visibility - Show or hide a specific layer                    }
 {..............................................................................}
-function SetPCBLayerVisibility(LayerName: String; IsVisible: Boolean): String;
+function SetPCBLayerVisibility(LayerNamesList: TStringList; Visible: Boolean): String;
 var
     Board       : IPCB_Board;
     LayerObj    : TLayer;
@@ -302,7 +358,7 @@ var
     OutputLines : TStringList;
 begin
     // Retrieve the current board
-    Board := PCBServer.GetCurrentPCBBoard;
+    Board := GetPCBServer.GetCurrentPCBBoard;
     if (Board = nil) then
     begin
         Result := '{"success": false, "error": "No PCB document is currently active"}';
@@ -336,7 +392,7 @@ begin
             Exit;
         end;
         
-        PCBServer.PreProcess;
+        GetPCBServer.PreProcess;
         try
             Board.LayerIsDisplayed[LayerObj] := IsVisible;
             
@@ -344,11 +400,11 @@ begin
             AddJSONProperty(ResultProps, 'layer', LayerName);
             AddJSONBoolean(ResultProps, 'visible', IsVisible);
         finally
-            PCBServer.PostProcess;
+            GetPCBServer.PostProcess;
         end;
         
         // Refresh view
-        Client.SendMessage('PCB:Zoom', 'Action=Redraw', 255, Client.CurrentView);
+        GetClient.SendMessage('PCB:Zoom', 'Action=Redraw', 255, GetClient.CurrentView);
         
         // Build final JSON
         OutputLines := TStringList.Create;
@@ -376,7 +432,7 @@ var
     OutputLines   : TStringList;
 begin
     // Retrieve the current board
-    Board := PCBServer.GetCurrentPCBBoard;
+    Board := GetPCBServer.GetCurrentPCBBoard;
     if (Board = Nil) then
     begin
         Result := '[]';
@@ -447,7 +503,7 @@ var
     OutputLines : TStringList;
 begin
     // Retrieve the current board
-    Board := PCBServer.GetCurrentPCBBoard;
+    Board := GetPCBServer.GetCurrentPCBBoard;
     if (Board = nil) then
     begin
         Result := '[]';
@@ -535,7 +591,7 @@ begin
     Result := '';
 
     // Retrieve the current board
-    Board := PCBServer.GetCurrentPCBBoard;
+    Board := GetPCBServer.GetCurrentPCBBoard;
     if Board = nil then Exit;
 
     // Get board origin coordinates
@@ -612,7 +668,7 @@ var
     OutputLines     : TStringList;
 begin
     // Retrieve the current board
-    Board := PCBServer.GetCurrentPCBBoard;
+    Board := GetPCBServer.GetCurrentPCBBoard;
     if (Board = nil) then
     begin
         Result := '[]';
@@ -760,7 +816,7 @@ var
     OutputLines    : TStringList;
 begin
     // Retrieve the current board
-    Board := PCBServer.GetCurrentPCBBoard;
+    Board := GetPCBServer.GetCurrentPCBBoard;
     if (Board = nil) then
     begin
         Result := 'ERROR: No PCB document is currently active';
@@ -774,7 +830,7 @@ begin
     
     try
         // Start transaction
-        PCBServer.PreProcess;
+        GetPCBServer.PreProcess;
         
         // Process each designator
         for i := 0 to DesignatorsList.Count - 1 do
@@ -787,7 +843,7 @@ begin
             if (Component <> Nil) then
             begin
                 // Begin modify
-                PCBServer.SendMessageToRobots(Component.I_ObjectAddress, c_Broadcast, PCBM_BeginModify, c_NoEventData);
+                GetPCBServer.SendMessageToRobots(Component.I_ObjectAddress, c_Broadcast, PCBM_BeginModify, c_NoEventData);
                 
                 // Move the component by the specified offsets
                 Component.MoveByXY(XOffset, YOffset);
@@ -797,7 +853,7 @@ begin
                     Component.Rotation := Rotation;
                 
                 // End modify
-                PCBServer.SendMessageToRobots(Component.I_ObjectAddress, c_Broadcast, PCBM_EndModify, c_NoEventData);
+                GetPCBServer.SendMessageToRobots(Component.I_ObjectAddress, c_Broadcast, PCBM_EndModify, c_NoEventData);
                 
                 MovedCount := MovedCount + 1;
             end
@@ -812,7 +868,7 @@ begin
         PCBServer.PostProcess;
         
         // Update PCB document
-        Client.SendMessage('PCB:Zoom', 'Action=Redraw', 255, Client.CurrentView);
+        GetClient.SendMessage('PCB:Zoom', 'Action=Redraw', 255, GetClient.CurrentView);
         
         // Create result JSON
         AddJSONInteger(ResultProps, 'moved_count', MovedCount);
