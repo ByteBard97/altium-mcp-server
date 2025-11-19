@@ -88,35 +88,6 @@ begin
     end;
 end;
 
-
-function ExecuteSearchComponents(RequestData: TStringList): String;
-var
-    i, ValueStart: Integer;
-    Query: String;
-begin
-    Query := '';
-
-    try
-        for i := 0 to RequestData.Count - 1 do
-        begin
-            if (Pos('"query"', RequestData[i]) > 0) then
-            begin
-                ValueStart := Pos(':', RequestData[i]) + 1;
-                Query := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
-                Query := TrimJSON(Query);
-                break;
-            end;
-        end;
-
-        if Query <> '' then
-            Result := SearchComponents(Query)
-        else
-            Result := '{"success": false, "error": "Query parameter required"}';
-    except
-            Result := '{"success": false, "error": "' + ExceptionMessage + '"}';
-    end;
-
-
 function ExecuteGetComponentFromLibrary(RequestData: TStringList): String;
 var
     i, ValueStart: Integer;
@@ -178,6 +149,6 @@ begin
     except
             Result := '{"success": false, "error": "' + ExceptionMessage + '"}';
     end;
-
+end;
 
 end.
