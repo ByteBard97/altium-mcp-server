@@ -6,7 +6,11 @@ unit command_router;
 interface
 
 uses
-    PCB, Classes, SysUtils, globals, json_utils, command_executors_components, command_executors_library, command_executors_placement, command_executors_board;
+    PCB, Classes, SysUtils, globals, json_utils,
+    command_executors_components, command_executors_library,
+    command_executors_placement, command_executors_board,
+    project_utils, library_utils, pcb_utils, schematic_utils,
+    other_utils, pcb_layout_duplicator;
 
 function ExecuteCommand(CommandName: String): String;
 
@@ -48,9 +52,9 @@ begin
         'layout_duplicator':
             Result := GetLayoutDuplicatorComponents(True);            
         'layout_duplicator_apply':
-            Result := ExecuteLayoutDuplicatorApply(RequestData);            
+            Result := ExecuteLayoutDuplicatorApply(RequestData);
         'get_pcb_rules':
-            Result := GetPCBRules(ROOT_DIR);
+            Result := GetDesignRules(ROOT_DIR);
         'get_output_job_containers':
             Result := ExecuteGetOutputJobContainers(RequestData);
         'run_output_jobs':
