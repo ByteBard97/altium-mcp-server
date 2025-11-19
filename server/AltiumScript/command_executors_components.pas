@@ -72,7 +72,63 @@ end;
 
 
 function ExecuteCreateNetClass(RequestData: TStringList): String;
+var
+    ParamValue: String;
+    i, ValueStart: Integer;
+    ClassName: String;
+    NetNamesList: TStringList;
+begin
+    ClassName := '';
+    NetNamesList := TStringList.Create;
 
+    try
+        // Parse parameters from the request
+        for i := 0 to RequestData.Count - 1 do
+        begin
+            // Look for class_name
+            if (Pos('"class_name"', RequestData[i]) > 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                ClassName := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                ClassName := TrimJSON(ClassName);
+            end
+            // Look for net_names array
+            else if (Pos('"net_names"', RequestData[i]) > 0) then
+            begin
+                // Parse the array in the next lines
+                i := i + 1; // Move to the next line (should be '[')
+
+                while (i < RequestData.Count) and (Pos(']', RequestData[i]) = 0) do
+                begin
+                    // Extract the net name
+                    ParamValue := RequestData[i];
+                    ParamValue := StringReplace(ParamValue, '"', '', REPLACEALL);
+                    ParamValue := StringReplace(ParamValue, ',', '', REPLACEALL);
+                    ParamValue := Trim(ParamValue);
+
+                    if (ParamValue <> '') and (ParamValue <> '[') then
+                        NetNamesList.Add(ParamValue);
+
+                    i := i + 1;
+                end;
+            end;
+        end;
+
+        if (ClassName <> '') and (NetNamesList.Count > 0) then
+        begin
+            Result := CreatePCBNetClass(ClassName, NetNamesList);
+        end
+        else
+        begin
+            if ClassName = '' then
+                Result := '{"success": false, "error": "No class name provided"}'
+            else
+                Result := '{"success": false, "error": "No net names provided"}';
+        end;
+    finally
+        NetNamesList.Free;
+    end;
+end;
 
 function ExecuteTakeViewScreenshot(RequestData: TStringList): String;
 var
