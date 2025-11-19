@@ -47,6 +47,51 @@ end;
 
 
 procedure WriteResponse(Success: Boolean; Data: String; ErrorMsg: String);
+var
+    ActualSuccess: Boolean;
+    ActualErrorMsg: String;
+    ResultProps: TStringList;
+begin
+    // Check if Data contains an error message
+    if (Pos('ERROR:', Data) = 1) then
+    begin
+        ActualSuccess := False;
+        ActualErrorMsg := Copy(Data, 8, Length(Data)); // Remove 'ERROR: ' prefix
+    end
+    else
+    begin
+        ActualSuccess := Success;
+        ActualErrorMsg := ErrorMsg;
+    end;
 
+    // Create response props
+    ResultProps := TStringList.Create;
+    ResponseData := TStringList.Create;
+
+    try
+        // Add properties
+        AddJSONBoolean(ResultProps, 'success', ActualSuccess);
+
+        if ActualSuccess then
+        begin
+            // For JSON responses (starting with [ or {), don't wrap in additional quotes
+            if (Length(Data) > 0) and ((Data[1] = '[') or (Data[1] = '{')) then
+                ResultProps.Add(JSONPairStr('result', Data, False))
+            else
+                AddJSONProperty(ResultProps, 'result', Data);
+        end
+        else
+        begin
+            AddJSONProperty(ResultProps, 'error', ActualErrorMsg);
+        end;
+
+        // Build response
+        ResponseData.Text := BuildJSONObject(ResultProps);
+        ResponseData.SaveToFile(RESPONSE_FILE);
+    finally
+        ResultProps.Free;
+        ResponseData.Free;
+    end;
+end;
 
 end.
