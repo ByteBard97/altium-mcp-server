@@ -56,9 +56,9 @@ begin
                 if Project <> nil then
                 begin
                     // Iterate through all documents in the project
-                    for j := 0 to Project.DM_DocumentCount - 1 do
+                    for j := 0 to Project.DM_LogicalDocumentCount - 1 do
                     begin
-                        Doc := Project.DM_Documents(j);
+                        Doc := Project.DM_LogicalDocuments(j);
                         if Doc <> nil then
                         begin
                             LibPath := Doc.DM_FileName;
@@ -155,9 +155,9 @@ begin
                 if Project <> nil then
                 begin
                     // Iterate through all documents in the project
-                    for j := 0 to Project.DM_DocumentCount - 1 do
+                    for j := 0 to Project.DM_LogicalDocumentCount - 1 do
                     begin
-                        Doc := Project.DM_Documents(j);
+                        Doc := Project.DM_LogicalDocuments(j);
                         if (Doc <> nil) and (Pos('.SCHLIB', UpperCase(Doc.DM_FileName)) > 0) then
                         begin
                             LibPath := Doc.DM_FileName;
@@ -355,9 +355,9 @@ begin
                 if Project <> nil then
                 begin
                     // Iterate through all documents in the project
-                    for j := 0 to Project.DM_DocumentCount - 1 do
+                    for j := 0 to Project.DM_LogicalDocumentCount - 1 do
                     begin
-                        Doc := Project.DM_Documents(j);
+                        Doc := Project.DM_LogicalDocuments(j);
                         if (Doc <> nil) and (Pos('.PCBLIB', UpperCase(Doc.DM_FileName)) > 0) then
                         begin
                             LibPath := Doc.DM_FileName;

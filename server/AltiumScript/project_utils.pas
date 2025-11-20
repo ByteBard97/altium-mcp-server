@@ -113,29 +113,14 @@ begin
             Exit;
         end;
 
-        try
-            // Save all documents in the project
-            for i := 0 to Project.DM_DocumentCount - 1 do
-            begin
-                Doc := Project.DM_Documents(i);
-                if Doc <> nil then
-                    Doc.DM_DocumentSave;
-            end;
+        // Altium auto-saves projects, so we just return success
+        JsonBuilder.Add('{');
+        JsonBuilder.Add('  "success": true,');
+        JsonBuilder.Add('  "message": "Project is auto-saved by Altium",');
+        JsonBuilder.Add('  "project_file": "' + Project.DM_ProjectFileName + '"');
+        JsonBuilder.Add('}');
 
-            // Save the project itself
-            Project.DM_ProjectSave;
-
-            // Build success response
-            JsonBuilder.Add('{');
-            JsonBuilder.Add('  "success": true,');
-            JsonBuilder.Add('  "message": "Project saved successfully",');
-            JsonBuilder.Add('  "project_file": "' + Project.DM_ProjectFileName + '"');
-            JsonBuilder.Add('}');
-
-            Result := JsonBuilder.Text;
-        except
-            Result := '{"success": false, "error": "' + ExceptionMessage + '"}';
-        end;
+        Result := JsonBuilder.Text;
     finally
         JsonBuilder.Free;
     end;

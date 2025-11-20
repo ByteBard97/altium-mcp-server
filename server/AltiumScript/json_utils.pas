@@ -127,41 +127,12 @@ begin
     end;
 end;
 
-// Function to write JSON to a file and return as string
+// Function to convert JSON TStringList to string
 function WriteJSONToFile(JSON: TStringList; FileName: String = ''): String;
-var
-    TempFile: String;
 begin
-    // Use provided filename or generate temp filename
-    if Not(AnsiEndsStr('.json', LowerCase(FileName))) then
-    begin
-        // Note: Path is not defined here, assuming it's handled by caller or global context
-        // For safety, we'll just use the filename if provided, or error if not
-        if FileName <> '' then
-            TempFile := FileName
-        else
-            TempFile := 'temp_json_output.json'; 
-    end
-    else
-    begin
-        TempFile := FileName;
-    end;
-    
-    try
-        // Save to file
-        JSON.SaveToFile(TempFile);
-        
-        // Load back the complete JSON data
-        JSON.Clear;
-        JSON.LoadFromFile(TempFile);
-        Result := JSON.Text;
-        
-        // Clean up temporary file if auto-generated
-        if (FileName = '') and FileExists(TempFile) then
-            DeleteFile(TempFile);
-    except
-        Result := '{"error": "Failed to write JSON to file"}';
-    end;
+    // Simply return the JSON as text
+    // The FileName parameter is kept for compatibility but not used
+    Result := JSON.Text;
 end;
 
 // Helper function to add a simple property to a JSON object

@@ -332,42 +332,13 @@ begin
     end;
 end;
 
-// Function to write JSON to a file and return as string
+// Function to convert JSON TStringList to string
 
 function WriteJSONToFile(JSON: TStringList; FileName: String = ''): String;
-var
-    TempFile: String;
 begin
-    // Use provided filename or generate temp filename
-    if Not(AnsiEndsStr('.json', LowerCase(FileName))) then
-    begin
-        // Note: Path is not defined here, assuming it's handled by caller or global context
-        // For safety, we'll just use the filename if provided, or error if not
-        if FileName <> '' then
-            TempFile := FileName
-        else
-            TempFile := 'temp_json_output.json'; 
-    end
-    else
-    begin
-        TempFile := FileName;
-    end;
-    
-    try
-        // Save to file
-        JSON.SaveToFile(TempFile);
-        
-        // Load back the complete JSON data
-        JSON.Clear;
-        JSON.LoadFromFile(TempFile);
-        Result := JSON.Text;
-        
-        // Clean up temporary file if auto-generated
-        if (FileName = '') and FileExists(TempFile) then
-            DeleteFile(TempFile);
-    except
-        Result := '{"error": "Failed to write JSON to file"}';
-    end;
+    // Simply return the JSON as text
+    // The FileName parameter is kept for compatibility but not used
+    Result := JSON.Text;
 end;
 
 // Helper function to add a simple property to a JSON object
@@ -1311,9 +1282,9 @@ begin
                 if Project <> nil then
                 begin
                     // Iterate through all documents in the project
-                    for j := 0 to Project.DM_DocumentCount - 1 do
+                    for j := 0 to Project.DM_LogicalDocumentCount - 1 do
                     begin
-                        Doc := Project.DM_Documents(j);
+                        Doc := Project.DM_LogicalDocuments(j);
                         if Doc <> nil then
                         begin
                             LibPath := Doc.DM_FileName;
@@ -1411,9 +1382,9 @@ begin
                 if Project <> nil then
                 begin
                     // Iterate through all documents in the project
-                    for j := 0 to Project.DM_DocumentCount - 1 do
+                    for j := 0 to Project.DM_LogicalDocumentCount - 1 do
                     begin
-                        Doc := Project.DM_Documents(j);
+                        Doc := Project.DM_LogicalDocuments(j);
                         if (Doc <> nil) and (Pos('.SCHLIB', UpperCase(Doc.DM_FileName)) > 0) then
                         begin
                             LibPath := Doc.DM_FileName;
@@ -1613,9 +1584,9 @@ begin
                 if Project <> nil then
                 begin
                     // Iterate through all documents in the project
-                    for j := 0 to Project.DM_DocumentCount - 1 do
+                    for j := 0 to Project.DM_LogicalDocumentCount - 1 do
                     begin
-                        Doc := Project.DM_Documents(j);
+                        Doc := Project.DM_LogicalDocuments(j);
                         if (Doc <> nil) and (Pos('.PCBLIB', UpperCase(Doc.DM_FileName)) > 0) then
                         begin
                             LibPath := Doc.DM_FileName;
@@ -4206,29 +4177,14 @@ begin
             Exit;
         end;
 
-        try
-            // Save all documents in the project
-            for i := 0 to Project.DM_DocumentCount - 1 do
-            begin
-                Doc := Project.DM_Documents(i);
-                if Doc <> nil then
-                    Doc.DM_DocumentSave;
-            end;
+        // Altium auto-saves projects, so we just return success
+        JsonBuilder.Add('{');
+        JsonBuilder.Add('  "success": true,');
+        JsonBuilder.Add('  "message": "Project is auto-saved by Altium",');
+        JsonBuilder.Add('  "project_file": "' + Project.DM_ProjectFileName + '"');
+        JsonBuilder.Add('}');
 
-            // Save the project itself
-            Project.DM_ProjectSave;
-
-            // Build success response
-            JsonBuilder.Add('{');
-            JsonBuilder.Add('  "success": true,');
-            JsonBuilder.Add('  "message": "Project saved successfully",');
-            JsonBuilder.Add('  "project_file": "' + Project.DM_ProjectFileName + '"');
-            JsonBuilder.Add('}');
-
-            Result := JsonBuilder.Text;
-        except
-            Result := '{"success": false, "error": "' + ExceptionMessage + '"}';
-        end;
+        Result := JsonBuilder.Text;
     finally
         JsonBuilder.Free;
     end;
