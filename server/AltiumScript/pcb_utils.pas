@@ -5,11 +5,10 @@ unit pcb_utils;
 
 interface
 
-uses
-    Classes, SysUtils, PCB, json_utils, globals;
-
+function Layer2String(Layer: TLayer): String;
+function ShapeToString(Shape: TShape): String;
 function GetAllNets(ROOT_DIR: String): String;
-function CreatePCBNetClass(ClassName: String; NetNamesList: TStringList): String;
+function CreateNewNetClass(InClassName: String; InNetNames: TStringList): String;
 function GetPCBLayerStackup(ROOT_DIR: String): String;
 function GetPCBLayers(ROOT_DIR: String): String;
 function SetPCBLayerVisibility(LayerNamesList: TStringList; Visible: Boolean): String;
@@ -20,6 +19,9 @@ function GetComponentPinsFromList(ROOT_DIR: String; DesignatorsList: TStringList
 function MoveComponentsByDesignators(DesignatorsList: TStringList; XOffset, YOffset: TCoord; Rotation: TAngle): String;
 
 implementation
+
+uses
+    globals;
 
 // Helper function to convert layer object to string
 function Layer2String(Layer: TLayer): String;
@@ -76,10 +78,10 @@ begin
     else if Layer = eMechanical14 then Result := 'Mechanical14'
     else if Layer = eMechanical15 then Result := 'Mechanical15'
     else if Layer = eMechanical16 then Result := 'Mechanical16'
-    else if Layer = eSolderMaskTop then Result := 'SolderMaskTop'
-    else if Layer = eSolderMaskBottom then Result := 'SolderMaskBottom'
-    else if Layer = ePasteMaskTop then Result := 'PasteMaskTop'
-    else if Layer = ePasteMaskBottom then Result := 'PasteMaskBottom'
+    else if Layer = eTopSolder then Result := 'TopSolder'
+    else if Layer = eBottomSolder then Result := 'BottomSolder'
+    else if Layer = eTopPaste then Result := 'TopPaste'
+    else if Layer = eBottomPaste then Result := 'BottomPaste'
     else if Layer = eDrillGuide then Result := 'DrillGuide'
     else if Layer = eKeepOutLayer then Result := 'KeepOutLayer'
     else if Layer = eDrillDrawing then Result := 'DrillDrawing'
@@ -137,8 +139,9 @@ begin
             NetProps := TStringList.Create;
             try
                 AddJSONProperty(NetProps, 'name', Net.Name);
-                AddJSONInteger(NetProps, 'node_count', Net.NodeCount);
-                
+                // Note: NodeCount property doesn't exist in IPCB_Net
+                // To get node count, would need to iterate through net primitives
+
                 // Add to nets array
                 NetsArray.Add(BuildJSONObject(NetProps, 1));
             finally
@@ -168,10 +171,12 @@ end;
 {..............................................................................}
 { Create Net Class - Create a class of nets                                   }
 {..............................................................................}
-function CreatePCBNetClass(ClassName: String; NetNamesList: TStringList): String;
+function CreateNewNetClass(InClassName: String; InNetNames: TStringList): String;
 var
     Board       : IPCB_Board;
-    NetClass    : IPCB_ObjectClass;
+    NewNetClass : IPCB_ObjectClass;
+    ExistingClass: IPCB_ObjectClass;
+    Iterator    : IPCB_BoardIterator;
     Net         : IPCB_Net;
     ResultProps : TStringList;
     OutputLines : TStringList;
@@ -189,37 +194,66 @@ begin
 
     ResultProps := TStringList.Create;
     SuccessCount := 0;
-    
+
     try
         GetPCBServer.PreProcess;
         try
-            // Check if class already exists
-            NetClass := Board.GetObjectClassByName(ClassName);
-            
-            // If not, create it
-            if (NetClass = nil) then
+            // Check if class already exists using an iterator
+            NewNetClass := nil;
+            Iterator := Board.BoardIterator_Create;
+            Iterator.AddFilter_ObjectSet(MkSet(eClassObject));
+            Iterator.AddFilter_LayerSet(AllLayers);
+            Iterator.AddFilter_Method(eProcessAll);
+
+            ExistingClass := Iterator.FirstPCBObject;
+            while (ExistingClass <> nil) do
             begin
-                NetClass := GetPCBServer.PCBObjectFactory(eClassObject, eNoDimension, eCreate_Default);
-                NetClass.Name := ClassName;
-                NetClass.Kind := eNetClass;
-                Board.AddPCBObject(NetClass);
+                if (ExistingClass.MemberKind = eClassMemberKind_Net) and (ExistingClass.Name = InClassName) then
+                begin
+                    NewNetClass := ExistingClass;
+                    Break;
+                end;
+                ExistingClass := Iterator.NextPCBObject;
+            end;
+            Board.BoardIterator_Destroy(Iterator);
+
+            // If not found, create it
+            if (NewNetClass = nil) then
+            begin
+                NewNetClass := GetPCBServer.PCBClassFactoryByClassMember(eClassMemberKind_Net);
+                NewNetClass.SuperClass := False;
+                NewNetClass.Name := InClassName;
+                Board.AddPCBObject(NewNetClass);
             end;
             
             // Add nets to class
-            for i := 0 to NetNamesList.Count - 1 do
+            for i := 0 to InNetNames.Count - 1 do
             begin
-                NetName := Trim(NetNamesList[i]);
-                Net := Board.GetNetByName(NetName);
-                
-                if (Net <> nil) then
+                NetName := Trim(InNetNames[i]);
+
+                // Find the net using an iterator
+                Iterator := Board.BoardIterator_Create;
+                Iterator.AddFilter_ObjectSet(MkSet(eNetObject));
+                Iterator.AddFilter_LayerSet(AllLayers);
+                Iterator.AddFilter_Method(eProcessAll);
+
+                Net := Iterator.FirstPCBObject;
+                while (Net <> nil) do
                 begin
-                    NetClass.AddMember(Net);
-                    SuccessCount := SuccessCount + 1;
+                    if Net.Name = NetName then
+                    begin
+                        NewNetClass.AddMember(Net);
+                        SuccessCount := SuccessCount + 1;
+                        Break;
+                    end;
+                    Net := Iterator.NextPCBObject;
                 end;
+
+                Board.BoardIterator_Destroy(Iterator);
             end;
             
             AddJSONBoolean(ResultProps, 'success', True);
-            AddJSONProperty(ResultProps, 'class_name', ClassName);
+            AddJSONProperty(ResultProps, 'class_name', InClassName);
             AddJSONInteger(ResultProps, 'nets_added', SuccessCount);
         finally
             GetPCBServer.PostProcess;
@@ -244,11 +278,12 @@ end;
 function GetPCBLayerStackup(ROOT_DIR: String): String;
 var
     Board       : IPCB_Board;
-    LayerStack  : IPCB_MasterLayerStack;
-    Layer       : IPCB_LayerStack_LayerObject;
+    LayerStack  : IPCB_LayerStack_V7;
+    Layer       : IPCB_LayerObject_V7;
     LayersArray : TStringList;
     LayerProps  : TStringList;
     OutputLines : TStringList;
+    i           : Integer;
 begin
     // Retrieve the current board
     Board := GetPCBServer.GetCurrentPCBBoard;
@@ -260,29 +295,40 @@ begin
 
     // Create array for layers
     LayersArray := TStringList.Create;
-    
+
     try
         // Get layer stack
-        LayerStack := Board.MasterLayerStack;
+        LayerStack := Board.LayerStack_V7;
         if (LayerStack <> nil) then
         begin
-            // Iterate through layers
+            // Iterate through layers (with safety limit)
             Layer := LayerStack.FirstLayer;
-            while (Layer <> nil) do
+            i := 1;
+            while (Layer <> nil) and (i <= 32) do
             begin
                 LayerProps := TStringList.Create;
                 try
                     AddJSONProperty(LayerProps, 'name', Layer.Name);
-                    AddJSONProperty(LayerProps, 'type', Layer2String(Layer.LayerID));
-                    AddJSONNumber(LayerProps, 'thickness', CoordToMils(Layer.Thickness));
-                    AddJSONNumber(LayerProps, 'dielectric_constant', Layer.DielectricConstant);
-                    
+                    // Check if it's a signal or plane layer
+                    if ILayer.IsSignalLayer(Layer.LayerID) then
+                        AddJSONProperty(LayerProps, 'type', Layer2String(Layer.LayerID))
+                    else
+                        AddJSONProperty(LayerProps, 'type', 'InternalPlane');
+                    AddJSONNumber(LayerProps, 'thickness', CoordToMils(Layer.CopperThickness));
+
+                    // Dielectric properties are on the Dielectric sub-object
+                    if Layer.Dielectric <> nil then
+                        AddJSONNumber(LayerProps, 'dielectric_constant', Layer.Dielectric.DielectricConstant)
+                    else
+                        AddJSONNumber(LayerProps, 'dielectric_constant', 0);
+
                     // Add to layers array
                     LayersArray.Add(BuildJSONObject(LayerProps, 1));
                 finally
                     LayerProps.Free;
                 end;
-                
+
+                Inc(i);
                 Layer := LayerStack.NextLayer(Layer);
             end;
         end;
@@ -306,11 +352,13 @@ end;
 function GetPCBLayers(ROOT_DIR: String): String;
 var
     Board       : IPCB_Board;
-    Iterator    : IPCB_LayerIterator;
-    Layer       : IPCB_LayerObject;
+    LayerStack  : IPCB_LayerStack_V7;
+    Layer       : IPCB_LayerObject_V7;
     LayersArray : TStringList;
     LayerProps  : TStringList;
     OutputLines : TStringList;
+    MechLayer   : IPCB_MechanicalLayer;
+    i           : Integer;
 begin
     // Retrieve the current board
     Board := GetPCBServer.GetCurrentPCBBoard;
@@ -322,18 +370,57 @@ begin
 
     // Create array for layers
     LayersArray := TStringList.Create;
-    
+
     try
-        // Iterate through all layers
-        // Note: IPCB_LayerIterator might not be the correct way to get all layers in all versions
-        // Alternative is to iterate through enum values
-        
-        // For this implementation, we'll use a simplified approach checking standard layers
-        // This is a placeholder for a more comprehensive iteration if needed
-        
-        // TODO: Implement full layer iteration
-        // For now, return empty array as this requires more complex API usage
-        
+        LayerStack := Board.LayerStack_V7;
+        if (LayerStack <> nil) then
+        begin
+            // Iterate through signal/plane layers (with safety limit)
+            Layer := LayerStack.FirstLayer;
+            i := 1;
+            while (Layer <> nil) and (i <= 32) do
+            begin
+                LayerProps := TStringList.Create;
+                try
+                    AddJSONProperty(LayerProps, 'name', Layer.Name);
+                    // Check if it's a signal or plane layer
+                    if ILayer.IsSignalLayer(Layer.LayerID) then
+                        AddJSONProperty(LayerProps, 'type', Layer2String(Layer.LayerID))
+                    else
+                        AddJSONProperty(LayerProps, 'type', 'InternalPlane');
+                    AddJSONBoolean(LayerProps, 'visible', Layer.IsDisplayed[Board]);
+                    AddJSONProperty(LayerProps, 'layer_id', Layer2String(Layer.LayerID));
+
+                    LayersArray.Add(BuildJSONObject(LayerProps, 1));
+                finally
+                    LayerProps.Free;
+                end;
+
+                Inc(i);
+                Layer := LayerStack.NextLayer(Layer);
+            end;
+
+            // Add mechanical layers
+            for i := 1 to 32 do
+            begin
+                MechLayer := LayerStack.LayerObject_V7[ILayer.MechanicalLayer(i)];
+                if (MechLayer <> nil) and MechLayer.MechanicalLayerEnabled then
+                begin
+                    LayerProps := TStringList.Create;
+                    try
+                        AddJSONProperty(LayerProps, 'name', MechLayer.Name);
+                        AddJSONProperty(LayerProps, 'type', 'Mechanical');
+                        AddJSONBoolean(LayerProps, 'visible', MechLayer.IsDisplayed[Board]);
+                        AddJSONProperty(LayerProps, 'layer_id', Layer2String(MechLayer.LayerID));
+
+                        LayersArray.Add(BuildJSONObject(LayerProps, 1));
+                    finally
+                        LayerProps.Free;
+                    end;
+                end;
+            end;
+        end;
+
         // Build the final JSON array
         OutputLines := TStringList.Create;
         try
@@ -356,6 +443,9 @@ var
     LayerObj    : TLayer;
     ResultProps : TStringList;
     OutputLines : TStringList;
+    LayerName   : String;
+    i           : Integer;
+    SuccessCount: Integer;
 begin
     // Retrieve the current board
     Board := GetPCBServer.GetCurrentPCBBoard;
@@ -366,46 +456,44 @@ begin
     end;
 
     ResultProps := TStringList.Create;
-    
+    SuccessCount := 0;
+
     try
-        // Map string to layer object
-        // This is a simplified mapping, would need a full lookup table
-        if LayerName = 'TopLayer' then LayerObj := eTopLayer
-        else if LayerName = 'BottomLayer' then LayerObj := eBottomLayer
-        else if LayerName = 'TopOverlay' then LayerObj := eTopOverlay
-        else if LayerName = 'BottomOverlay' then LayerObj := eBottomOverlay
-        else
-        begin
-            // Try to find by name
-            // LayerObj := Board.LayerFromName(LayerName); // Hypothetical API
-            // If not found:
-            AddJSONBoolean(ResultProps, 'success', False);
-            AddJSONProperty(ResultProps, 'error', 'Unknown layer: ' + LayerName);
-            
-            OutputLines := TStringList.Create;
-            try
-                OutputLines.Text := BuildJSONObject(ResultProps);
-                Result := OutputLines.Text;
-            finally
-                OutputLines.Free;
-            end;
-            Exit;
-        end;
-        
         GetPCBServer.PreProcess;
         try
-            Board.LayerIsDisplayed[LayerObj] := IsVisible;
-            
+            // Process each layer name in the list
+            for i := 0 to LayerNamesList.Count - 1 do
+            begin
+                LayerName := Trim(LayerNamesList[i]);
+
+                // Map string to layer object
+                // This is a simplified mapping, would need a full lookup table
+                if LayerName = 'TopLayer' then LayerObj := eTopLayer
+                else if LayerName = 'BottomLayer' then LayerObj := eBottomLayer
+                else if LayerName = 'TopOverlay' then LayerObj := eTopOverlay
+                else if LayerName = 'BottomOverlay' then LayerObj := eBottomOverlay
+                else if LayerName = 'MidLayer1' then LayerObj := eMidLayer1
+                else if LayerName = 'MidLayer2' then LayerObj := eMidLayer2
+                else if LayerName = 'Mechanical1' then LayerObj := eMechanical1
+                else if LayerName = 'Mechanical2' then LayerObj := eMechanical2
+                else
+                    Continue; // Skip unknown layers
+
+                // Set layer visibility
+                Board.LayerIsDisplayed[LayerObj] := Visible;
+                SuccessCount := SuccessCount + 1;
+            end;
+
             AddJSONBoolean(ResultProps, 'success', True);
-            AddJSONProperty(ResultProps, 'layer', LayerName);
-            AddJSONBoolean(ResultProps, 'visible', IsVisible);
+            AddJSONInteger(ResultProps, 'layers_updated', SuccessCount);
+            AddJSONBoolean(ResultProps, 'visible', Visible);
         finally
             GetPCBServer.PostProcess;
         end;
-        
+
         // Refresh view
         GetClient.SendMessage('PCB:Zoom', 'Action=Redraw', 255, GetClient.CurrentView);
-        
+
         // Build final JSON
         OutputLines := TStringList.Create;
         try
@@ -865,7 +953,7 @@ begin
         end;
         
         // End transaction
-        PCBServer.PostProcess;
+        GetPCBServer.PostProcess;
         
         // Update PCB document
         GetClient.SendMessage('PCB:Zoom', 'Action=Redraw', 255, GetClient.CurrentView);
@@ -892,5 +980,7 @@ begin
         MissingArray.Free;
     end;
 end;
+
+
 
 end.

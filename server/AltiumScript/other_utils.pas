@@ -6,7 +6,7 @@ unit other_utils;
 interface
 
 uses
-    Classes, SysUtils, PCB, SCH;
+    Classes, SysUtils, PCB, SCH, globals;
 
 function ScriptProjectPath(Workspace: IWorkspace): String;
 function EnsureDocumentFocused(CommandName: String): Boolean;
@@ -135,7 +135,7 @@ begin
     if DocumentKind = 'PCB' then
     begin
         if PCBServer <> nil then
-            LogMessage := LogMessage + '. Current PCB: ' + BoolToStr(PCBServer.GetCurrentPCBBoard <> nil, True);
+            LogMessage := LogMessage + '. Current PCB: ' + BoolToStr(GetPCBServer.GetCurrentPCBBoard <> nil, True);
     end
     else if DocumentKind = 'SCH' then
     begin
@@ -164,7 +164,7 @@ begin
     // Check if the correct document type is already focused
     if (DocumentKind = 'PCB') and (PCBServer <> Nil) then
     begin
-        if PCBServer.GetCurrentPCBBoard <> Nil then
+        if GetPCBServer.GetCurrentPCBBoard <> Nil then
         begin
             Result := True;
             Exit;
@@ -213,7 +213,7 @@ begin
             // Verify that the document is now focused
             if DocumentKind = 'PCB' then
             begin
-                if PCBServer.GetCurrentPCBBoard <> Nil then
+                if GetPCBServer.GetCurrentPCBBoard <> Nil then
                 begin
                     Result := True;
                     // ShowMessage('Successfully focused PCB document');
@@ -488,14 +488,14 @@ begin
         AddJSONProperty(ResultProps, 'outjob_path', OutJobPath);
 
         // Open the OutJob document
-        if not(Client.IsDocumentOpen(OutJobPath)) then
+        if not(GetClient.IsDocumentOpen(OutJobPath)) then
         begin
-            OutJobDoc := Client.OpenDocument('OUTPUTJOB', OutJobPath);
+            OutJobDoc := GetClient.OpenDocument('OUTPUTJOB', OutJobPath);
             OutJobDoc.Focus();
         end
         else
         begin
-            OutJobDoc := Client.GetDocumentByPath(OutJobPath);
+            OutJobDoc := GetClient.GetDocumentByPath(OutJobPath);
             OutJobDoc.Focus();
         end;
 

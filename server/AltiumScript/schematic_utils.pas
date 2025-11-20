@@ -5,14 +5,16 @@ unit schematic_utils;
 
 interface
 
-uses
-    Classes, SysUtils, SCH, json_utils, Math;
-
+function StrToPinElectricalType(ElecType: String): TPinElectrical;
+function StrToPinOrientation(Orient: String): TRotationBy90;
 function GetLibrarySymbolReference(ROOT_DIR: String): String;
 function CreateSchematicSymbol(SymbolName: String; PinsList: TStringList): String;
 function GetSchematicData(ROOT_DIR: String): String;
 
 implementation
+
+uses
+    globals;
 
 // Helper function to convert string to pin electrical type
 function StrToPinElectricalType(ElecType: String): TPinElectrical;
@@ -444,7 +446,7 @@ begin
             If Doc.DM_DocumentKind = 'SCH' Then
             Begin
                 // Open the schematic document
-                Client.OpenDocument('SCH', Doc.DM_FullPath);
+                GetClient.OpenDocument('SCH', Doc.DM_FullPath);
                 CurrentSch := SchServer.GetSchDocumentByPath(Doc.DM_FullPath);
 
                 If (CurrentSch <> Nil) Then
@@ -556,5 +558,7 @@ begin
         ComponentsArray.Free;
     end;
 end;
+
+
 
 end.

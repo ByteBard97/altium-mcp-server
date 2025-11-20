@@ -5,9 +5,11 @@ unit json_utils;
 
 interface
 
-uses
-    Classes, SysUtils;
+const
+    REPLACEALL = 1;
 
+// Helper function to remove characters from a string
+function RemoveChar(const S: String; C: Char): String;
 function TrimJSON(InputStr: String): String;
 function JSONEscapeString(const S: String): String;
 function JSONPairStr(const Name, Value: String; IsString: Boolean): String;
@@ -21,10 +23,6 @@ procedure AddJSONBoolean(List: TStringList; Name: String; Value: Boolean);
 
 implementation
 
-const
-    REPLACEALL = 1;
-
-// Helper function to remove characters from a string
 function RemoveChar(const S: String; C: Char): String;
 var
   I: Integer;

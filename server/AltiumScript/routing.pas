@@ -5,14 +5,14 @@ unit routing;
 
 interface
 
-uses
-    Classes, SysUtils, PCB, json_utils;
-
 function RouteTrace(X1, Y1, X2, Y2, Width: Double; Layer: String; NetName: String): String;
 function AddVia(X, Y, Diameter, HoleSize: Double; StartLayer, EndLayer: String; NetName: String): String;
 function AddCopperPour(X, Y, Width, Height: Double; Layer: String; NetName: String; PourOverSameNet: Boolean): String;
 
 implementation
+
+uses
+    globals;
 
 {..............................................................................}
 { Route Trace - Route a trace between two points on a layer                   }
@@ -28,7 +28,7 @@ var
 begin
     ResultProps := TStringList.Create;
     try
-        Board := PCBServer.GetCurrentPCBBoard;
+        Board := GetPCBServer.GetCurrentPCBBoard;
         if Board = nil then
         begin
             AddJSONBoolean(ResultProps, 'success', False);
@@ -53,10 +53,10 @@ begin
         else if Layer = 'MidLayer3' then LayerObj := eMidLayer3
         else if Layer = 'MidLayer4' then LayerObj := eMidLayer4;
 
-        PCBServer.PreProcess;
+        GetPCBServer.PreProcess;
         try
             // Create track object
-            Track := PCBServer.PCBObjectFactory(eTrackObject, eNoDimension, eCreate_Default);
+            Track := GetPCBServer.PCBObjectFactory(eTrackObject, eNoDimension, eCreate_Default);
             if Track <> nil then
             begin
                 // Set endpoints
@@ -78,7 +78,7 @@ begin
                     else
                     begin
                         // Create new net if it doesn't exist
-                        Net := PCBServer.PCBObjectFactory(eNetObject, eNoDimension, eCreate_Default);
+                        Net := GetPCBServer.PCBObjectFactory(eNetObject, eNoDimension, eCreate_Default);
                         if Net <> nil then
                         begin
                             Net.Name := TDynamicString(NetName);
@@ -89,7 +89,7 @@ begin
                 end;
 
                 Board.AddPCBObject(Track);
-                PCBServer.SendMessageToRobots(Board.I_ObjectAddress, c_Broadcast, PCBM_BoardRegisteration, Track.I_ObjectAddress);
+                GetPCBServer.SendMessageToRobots(Board.I_ObjectAddress, c_Broadcast, PCBM_BoardRegisteration, Track.I_ObjectAddress);
 
                 AddJSONBoolean(ResultProps, 'success', True);
                 AddJSONProperty(ResultProps, 'message', 'Trace routed');
@@ -106,11 +106,11 @@ begin
                 AddJSONProperty(ResultProps, 'error', 'Failed to create track object');
             end;
         finally
-            PCBServer.PostProcess;
+            GetPCBServer.PostProcess;
         end;
 
         // Refresh view
-        Client.SendMessage('PCB:Zoom', 'Action=Redraw', 255, Client.CurrentView);
+        GetClient.SendMessage('PCB:Zoom', 'Action=Redraw', 255, GetClient.CurrentView);
 
         OutputLines := TStringList.Create;
         try
@@ -138,7 +138,7 @@ var
 begin
     ResultProps := TStringList.Create;
     try
-        Board := PCBServer.GetCurrentPCBBoard;
+        Board := GetPCBServer.GetCurrentPCBBoard;
         if Board = nil then
         begin
             AddJSONBoolean(ResultProps, 'success', False);
@@ -169,10 +169,10 @@ begin
         else if EndLayer = 'MidLayer3' then EndLayerObj := eMidLayer3
         else if EndLayer = 'MidLayer4' then EndLayerObj := eMidLayer4;
 
-        PCBServer.PreProcess;
+        GetPCBServer.PreProcess;
         try
             // Create via object
-            Via := PCBServer.PCBObjectFactory(eViaObject, eNoDimension, eCreate_Default);
+            Via := GetPCBServer.PCBObjectFactory(eViaObject, eNoDimension, eCreate_Default);
             if Via <> nil then
             begin
                 // Set position
@@ -196,7 +196,7 @@ begin
                     else
                     begin
                         // Create new net if it doesn't exist
-                        Net := PCBServer.PCBObjectFactory(eNetObject, eNoDimension, eCreate_Default);
+                        Net := GetPCBServer.PCBObjectFactory(eNetObject, eNoDimension, eCreate_Default);
                         if Net <> nil then
                         begin
                             Net.Name := TDynamicString(NetName);
@@ -207,7 +207,7 @@ begin
                 end;
 
                 Board.AddPCBObject(Via);
-                PCBServer.SendMessageToRobots(Board.I_ObjectAddress, c_Broadcast, PCBM_BoardRegisteration, Via.I_ObjectAddress);
+                GetPCBServer.SendMessageToRobots(Board.I_ObjectAddress, c_Broadcast, PCBM_BoardRegisteration, Via.I_ObjectAddress);
 
                 AddJSONBoolean(ResultProps, 'success', True);
                 AddJSONProperty(ResultProps, 'message', 'Via added');
@@ -226,11 +226,11 @@ begin
                 AddJSONProperty(ResultProps, 'error', 'Failed to create via object');
             end;
         finally
-            PCBServer.PostProcess;
+            GetPCBServer.PostProcess;
         end;
 
         // Refresh view
-        Client.SendMessage('PCB:Zoom', 'Action=Redraw', 255, Client.CurrentView);
+        GetClient.SendMessage('PCB:Zoom', 'Action=Redraw', 255, GetClient.CurrentView);
 
         OutputLines := TStringList.Create;
         try
@@ -259,7 +259,7 @@ var
 begin
     ResultProps := TStringList.Create;
     try
-        Board := PCBServer.GetCurrentPCBBoard;
+        Board := GetPCBServer.GetCurrentPCBBoard;
         if Board = nil then
         begin
             AddJSONBoolean(ResultProps, 'success', False);
@@ -284,10 +284,10 @@ begin
         else if Layer = 'MidLayer3' then LayerObj := eMidLayer3
         else if Layer = 'MidLayer4' then LayerObj := eMidLayer4;
 
-        PCBServer.PreProcess;
+        GetPCBServer.PreProcess;
         try
             // Create polygon object
-            Polygon := PCBServer.PCBObjectFactory(ePolyObject, eNoDimension, eCreate_Default);
+            Polygon := GetPCBServer.PCBObjectFactory(ePolyObject, eNoDimension, eCreate_Default);
             if Polygon <> nil then
             begin
                 // Set layer
@@ -336,7 +336,7 @@ begin
                     else
                     begin
                         // Create new net if it doesn't exist
-                        Net := PCBServer.PCBObjectFactory(eNetObject, eNoDimension, eCreate_Default);
+                        Net := GetPCBServer.PCBObjectFactory(eNetObject, eNoDimension, eCreate_Default);
                         if Net <> nil then
                         begin
                             Net.Name := TDynamicString(NetName);
@@ -350,7 +350,7 @@ begin
                 Polygon.Rebuild;
 
                 Board.AddPCBObject(Polygon);
-                PCBServer.SendMessageToRobots(Board.I_ObjectAddress, c_Broadcast, PCBM_BoardRegisteration, Polygon.I_ObjectAddress);
+                GetPCBServer.SendMessageToRobots(Board.I_ObjectAddress, c_Broadcast, PCBM_BoardRegisteration, Polygon.I_ObjectAddress);
 
                 AddJSONBoolean(ResultProps, 'success', True);
                 AddJSONProperty(ResultProps, 'message', 'Copper pour added');
@@ -367,11 +367,11 @@ begin
                 AddJSONProperty(ResultProps, 'error', 'Failed to create polygon object');
             end;
         finally
-            PCBServer.PostProcess;
+            GetPCBServer.PostProcess;
         end;
 
         // Refresh view
-        Client.SendMessage('PCB:Zoom', 'Action=Redraw', 255, Client.CurrentView);
+        GetClient.SendMessage('PCB:Zoom', 'Action=Redraw', 255, GetClient.CurrentView);
 
         OutputLines := TStringList.Create;
         try
@@ -384,5 +384,7 @@ begin
         ResultProps.Free;
     end;
 end;
+
+
 
 end.

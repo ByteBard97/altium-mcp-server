@@ -1,3 +1,9 @@
+program compile_test;
+{$mode delphi}{$H+}
+
+uses
+  altium_stubs, Classes, SysUtils;
+
 // Altium_API.pas
 // Auto-generated combined script - DO NOT EDIT DIRECTLY
 // Edit source files and run build_script.py instead
@@ -22,8 +28,7 @@
 //   - command_router.pas
 //   - check_pcb_utils.pas
 
-uses
-    PCB, SCH, Workspace, Classes, SysUtils;
+
 
 // ============================================================================
 // GLOBAL VARIABLES
@@ -6723,3 +6728,8 @@ begin
         ShowMessage('Error: Exception occurred during script execution');
     end;
 end;
+
+
+begin
+  // Empty program - just syntax checking
+end.

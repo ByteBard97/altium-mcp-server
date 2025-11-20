@@ -5,15 +5,17 @@ unit component_placement;
 
 interface
 
-uses
-    Classes, SysUtils, PCB, json_utils;
-
+function FindFootprintInLibraries(const FootprintName: String): IPCB_LibComponent;
+function CopyFootprintPrimitives(LibFootprint: IPCB_LibComponent; Component: IPCB_Component): Boolean;
 function PlaceComponent(const Designator, Footprint: String; const X, Y: Double; const Layer, Rotation: Integer): String;
 function DeleteComponent(const Designator: String): String;
 function PlaceComponentArray(const Footprint, RefDes: String; const StartX, StartY, SpacingX, SpacingY: Double; const Rows, Cols: Integer): String;
 function AlignComponents(const DesignatorsStr: String; const Alignment: String): String;
 
 implementation
+
+uses
+    globals;
 
 {..............................................................................}
 { Helper function to find a footprint in loaded libraries                     }
@@ -120,7 +122,7 @@ var
 begin
     JsonResult := TStringList.Create;
     try
-        Board := PCBServer.GetCurrentPCBBoard;
+        Board := GetPCBServer.GetCurrentPCBBoard;
         if Board = nil then
         begin
             Result := '{"success": false, "error": "No board open"}';
@@ -135,10 +137,10 @@ begin
             Exit;
         end;
 
-        PCBServer.PreProcess;
+        GetPCBServer.PreProcess;
         try
             // Create component
-            Component := PCBServer.PCBObjectFactory(eComponentObject, eNoDimension, eCreate_Default);
+            Component := GetPCBServer.PCBObjectFactory(eComponentObject, eNoDimension, eCreate_Default);
             if Component = nil then
             begin
                 Result := '{"success": false, "error": "Failed to create component"}';
@@ -173,7 +175,7 @@ begin
             Board.AddPCBObject(Component);
 
             // Register component with board
-            PCBServer.SendMessageToRobots(Board.I_ObjectAddress, c_Broadcast, PCBM_BoardRegisteration, Component.I_ObjectAddress);
+            GetPCBServer.SendMessageToRobots(Board.I_ObjectAddress, c_Broadcast, PCBM_BoardRegisteration, Component.I_ObjectAddress);
 
             JsonResult.Add('{');
             JsonResult.Add('  "success": true,');
@@ -186,11 +188,11 @@ begin
             JsonResult.Add('}');
             Result := JsonResult.Text;
         finally
-            PCBServer.PostProcess;
+            GetPCBServer.PostProcess;
         end;
 
         // Refresh view
-        Client.SendMessage('PCB:Zoom', 'Action=Redraw', 255, Client.CurrentView);
+        GetClient.SendMessage('PCB:Zoom', 'Action=Redraw', 255, GetClient.CurrentView);
 
     except
             Result := '{"success": false, "error": "' + ExceptionMessage + '"}';
@@ -208,7 +210,7 @@ var
 begin
     Result := '';
     try
-        Board := PCBServer.GetCurrentPCBBoard;
+        Board := GetPCBServer.GetCurrentPCBBoard;
         if Board = nil then
         begin
             Result := '{"success": false, "error": "No board open"}';
@@ -223,19 +225,19 @@ begin
             Exit;
         end;
 
-        PCBServer.PreProcess;
+        GetPCBServer.PreProcess;
         try
             // Remove component
             Board.RemovePCBObject(Component);
-            PCBServer.DestroyPCBObject(Component);
+            GetPCBServer.DestroyPCBObject(Component);
 
             Result := '{"success": true, "message": "Component deleted: ' + Designator + '"}';
         finally
-            PCBServer.PostProcess;
+            GetPCBServer.PostProcess;
         end;
 
         // Refresh
-        Client.SendMessage('PCB:Zoom', 'Action=Redraw', 255, Client.CurrentView);
+        GetClient.SendMessage('PCB:Zoom', 'Action=Redraw', 255, GetClient.CurrentView);
 
     except
             Result := '{"success": false, "error": "' + ExceptionMessage + '"}';
@@ -307,7 +309,8 @@ function AlignComponents(
 ): String;
 var
     Board: IPCB_Board;
-    Components: array of IPCB_Component;
+    Components: array[0..99] of IPCB_Component;
+    ComponentCount: Integer;
     DesignatorsList: TStringList;
     i: Integer;
     AlignCoord: TCoord;
@@ -318,7 +321,7 @@ begin
     JsonResult := TStringList.Create;
     DesignatorsList := TStringList.Create;
     try
-        Board := PCBServer.GetCurrentPCBBoard;
+        Board := GetPCBServer.GetCurrentPCBBoard;
         if Board = nil then
         begin
             Result := '{"success": false, "error": "No board open"}';
@@ -335,9 +338,15 @@ begin
             Exit;
         end;
 
+        if DesignatorsList.Count > 100 then
+        begin
+            Result := '{"success": false, "error": "Too many components (max 100)"}';
+            Exit;
+        end;
+
         // Get all components
-        SetLength(Components, DesignatorsList.Count);
-        for i := 0 to DesignatorsList.Count - 1 do
+        ComponentCount := DesignatorsList.Count;
+        for i := 0 to ComponentCount - 1 do
         begin
             Designator := Trim(DesignatorsList[i]);
             Components[i] := Board.GetPcbComponentByRefDes(Designator);
@@ -352,28 +361,28 @@ begin
         if Alignment = 'left' then
         begin
             AlignCoord := Components[0].x;
-            for i := 1 to Length(Components) - 1 do
+            for i := 1 to ComponentCount - 1 do
                 if Components[i].x < AlignCoord then
                     AlignCoord := Components[i].x;
         end
         else if Alignment = 'right' then
         begin
             AlignCoord := Components[0].x;
-            for i := 1 to Length(Components) - 1 do
+            for i := 1 to ComponentCount - 1 do
                 if Components[i].x > AlignCoord then
                     AlignCoord := Components[i].x;
         end
         else if Alignment = 'top' then
         begin
             AlignCoord := Components[0].y;
-            for i := 1 to Length(Components) - 1 do
+            for i := 1 to ComponentCount - 1 do
                 if Components[i].y > AlignCoord then
                     AlignCoord := Components[i].y;
         end
         else if Alignment = 'bottom' then
         begin
             AlignCoord := Components[0].y;
-            for i := 1 to Length(Components) - 1 do
+            for i := 1 to ComponentCount - 1 do
                 if Components[i].y < AlignCoord then
                     AlignCoord := Components[i].y;
         end
@@ -384,9 +393,9 @@ begin
         end;
 
         // Apply alignment
-        PCBServer.PreProcess;
+        GetPCBServer.PreProcess;
         try
-            for i := 0 to Length(Components) - 1 do
+            for i := 0 to ComponentCount - 1 do
             begin
                 Component := Components[i];
                 if (Alignment = 'left') or (Alignment = 'right') then
@@ -395,17 +404,17 @@ begin
                     Component.y := AlignCoord;
             end;
         finally
-            PCBServer.PostProcess;
+            GetPCBServer.PostProcess;
         end;
 
         // Refresh
-        Client.SendMessage('PCB:Zoom', 'Action=Redraw', 255, Client.CurrentView);
+        GetClient.SendMessage('PCB:Zoom', 'Action=Redraw', 255, GetClient.CurrentView);
 
         JsonResult.Add('{');
         JsonResult.Add('  "success": true,');
         JsonResult.Add('  "message": "Components aligned",');
         JsonResult.Add('  "alignment": "' + Alignment + '",');
-        JsonResult.Add('  "count": ' + IntToStr(Length(Components)));
+        JsonResult.Add('  "count": ' + IntToStr(ComponentCount));
         JsonResult.Add('}');
         Result := JsonResult.Text;
 
@@ -416,5 +425,7 @@ begin
     JsonResult.Free;
     DesignatorsList.Free;
 end;
+
+
 
 end.

@@ -7,15 +7,15 @@ unit library_utils;
 
 interface
 
-uses
-    Classes, SysUtils, PCB, SCH;
-
 function ListComponentLibraries: String;
 function SearchComponents(const Query: String): String;
 function GetComponentFromLibrary(const LibraryName, ComponentName: String): String;
 function SearchFootprints(const Query: String): String;
 
 implementation
+
+uses
+    globals;
 
 {..............................................................................}
 { ListComponentLibraries - List all available component libraries              }
@@ -364,7 +364,7 @@ begin
                             LibName := ExtractFileName(LibPath);
 
                             // Try to get the PCB library
-                            PCBLib := PCBServer.GetPCBLibraryByPath(LibPath);
+                            PCBLib := GetPCBServer.GetPCBLibraryByPath(LibPath);
                             if PCBLib <> nil then
                             begin
                                 // Iterate through footprints in the library
@@ -410,5 +410,7 @@ begin
         JsonBuilder.Free;
     end;
 end;
+
+
 
 end.

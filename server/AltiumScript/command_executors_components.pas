@@ -116,7 +116,7 @@ begin
 
         if (ClassName <> '') and (NetNamesList.Count > 0) then
         begin
-            Result := CreatePCBNetClass(ClassName, NetNamesList);
+            Result := CreateNewNetClass(ClassName, NetNamesList);
         end
         else
         begin

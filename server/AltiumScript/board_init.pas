@@ -5,15 +5,15 @@ unit board_init;
 
 interface
 
-uses
-    Classes, SysUtils, PCB, json_utils;
-
 function SetBoardSize(Width, Height: Double): String;
 function AddBoardOutline(X, Y, Width, Height: Double): String;
 function AddMountingHole(X, Y, HoleDiameter, PadDiameter: Double): String;
 function AddBoardText(Text: String; X, Y, Size: Double; Layer: String): String;
 
 implementation
+
+uses
+    globals;
 
 {..............................................................................}
 { Set Board Size - Set the dimensions of the PCB board                        }
@@ -26,7 +26,7 @@ var
 begin
     ResultProps := TStringList.Create;
     try
-        Board := PCBServer.GetCurrentPCBBoard;
+        Board := GetPCBServer.GetCurrentPCBBoard;
         if Board = nil then
         begin
             AddJSONBoolean(ResultProps, 'success', False);
@@ -42,7 +42,7 @@ begin
             Exit;
         end;
 
-        PCBServer.PreProcess;
+        GetPCBServer.PreProcess;
         try
             // Set board size (convert mm to internal units)
             Board.BoardOutline.SetState_XSize(MMsToCoord(Width));
@@ -52,11 +52,11 @@ begin
             AddJSONProperty(ResultProps, 'width', FloatToStr(Width) + 'mm');
             AddJSONProperty(ResultProps, 'height', FloatToStr(Height) + 'mm');
         finally
-            PCBServer.PostProcess;
+            GetPCBServer.PostProcess;
         end;
 
         // Refresh view
-        Client.SendMessage('PCB:Zoom', 'Action=Redraw', 255, Client.CurrentView);
+        GetClient.SendMessage('PCB:Zoom', 'Action=Redraw', 255, GetClient.CurrentView);
 
         OutputLines := TStringList.Create;
         try
@@ -85,7 +85,7 @@ var
 begin
     ResultProps := TStringList.Create;
     try
-        Board := PCBServer.GetCurrentPCBBoard;
+        Board := GetPCBServer.GetCurrentPCBBoard;
         if Board = nil then
         begin
             AddJSONBoolean(ResultProps, 'success', False);
@@ -114,12 +114,12 @@ begin
         Points[3].X := X1; Points[3].Y := Y2; // Top-left
         Points[4].X := X1; Points[4].Y := Y1; // Close the rectangle
 
-        PCBServer.PreProcess;
+        GetPCBServer.PreProcess;
         try
             // Create four tracks to form the board outline
             for i := 0 to 3 do
             begin
-                Track := PCBServer.PCBObjectFactory(eTrackObject, eNoDimension, eCreate_Default);
+                Track := GetPCBServer.PCBObjectFactory(eTrackObject, eNoDimension, eCreate_Default);
                 if Track <> nil then
                 begin
                     Track.X1 := Points[i].X;
@@ -130,7 +130,7 @@ begin
                     Track.Width := MMsToCoord(0.2); // 0.2mm width for outline
 
                     Board.AddPCBObject(Track);
-                    PCBServer.SendMessageToRobots(Board.I_ObjectAddress, c_Broadcast, PCBM_BoardRegisteration, Track.I_ObjectAddress);
+                    GetPCBServer.SendMessageToRobots(Board.I_ObjectAddress, c_Broadcast, PCBM_BoardRegisteration, Track.I_ObjectAddress);
                 end;
             end;
 
@@ -141,11 +141,11 @@ begin
             AddJSONProperty(ResultProps, 'width', FloatToStr(Width) + 'mm');
             AddJSONProperty(ResultProps, 'height', FloatToStr(Height) + 'mm');
         finally
-            PCBServer.PostProcess;
+            GetPCBServer.PostProcess;
         end;
 
         // Refresh view
-        Client.SendMessage('PCB:Zoom', 'Action=Redraw', 255, Client.CurrentView);
+        GetClient.SendMessage('PCB:Zoom', 'Action=Redraw', 255, GetClient.CurrentView);
 
         OutputLines := TStringList.Create;
         try
@@ -172,7 +172,7 @@ var
 begin
     ResultProps := TStringList.Create;
     try
-        Board := PCBServer.GetCurrentPCBBoard;
+        Board := GetPCBServer.GetCurrentPCBBoard;
         if Board = nil then
         begin
             AddJSONBoolean(ResultProps, 'success', False);
@@ -194,10 +194,10 @@ begin
         else
             ActualPadDiameter := PadDiameter;
 
-        PCBServer.PreProcess;
+        GetPCBServer.PreProcess;
         try
             // Create a pad object for the mounting hole
-            Pad := PCBServer.PCBObjectFactory(ePadObject, eNoDimension, eCreate_Default);
+            Pad := GetPCBServer.PCBObjectFactory(ePadObject, eNoDimension, eCreate_Default);
             if Pad <> nil then
             begin
                 // Set position
@@ -220,7 +220,7 @@ begin
                 Pad.Name := TDynamicString('MTG');
 
                 Board.AddPCBObject(Pad);
-                PCBServer.SendMessageToRobots(Board.I_ObjectAddress, c_Broadcast, PCBM_BoardRegisteration, Pad.I_ObjectAddress);
+                GetPCBServer.SendMessageToRobots(Board.I_ObjectAddress, c_Broadcast, PCBM_BoardRegisteration, Pad.I_ObjectAddress);
 
                 AddJSONBoolean(ResultProps, 'success', True);
                 AddJSONProperty(ResultProps, 'message', 'Mounting hole added');
@@ -235,11 +235,11 @@ begin
                 AddJSONProperty(ResultProps, 'error', 'Failed to create mounting hole pad object');
             end;
         finally
-            PCBServer.PostProcess;
+            GetPCBServer.PostProcess;
         end;
 
         // Refresh view
-        Client.SendMessage('PCB:Zoom', 'Action=Redraw', 255, Client.CurrentView);
+        GetClient.SendMessage('PCB:Zoom', 'Action=Redraw', 255, GetClient.CurrentView);
 
         OutputLines := TStringList.Create;
         try
@@ -266,7 +266,7 @@ var
 begin
     ResultProps := TStringList.Create;
     try
-        Board := PCBServer.GetCurrentPCBBoard;
+        Board := GetPCBServer.GetCurrentPCBBoard;
         if Board = nil then
         begin
             AddJSONBoolean(ResultProps, 'success', False);
@@ -290,10 +290,10 @@ begin
         else if Layer = 'BottomLayer' then LayerObj := eBottomLayer
         else if Layer = 'Mechanical1' then LayerObj := eMechanical1;
 
-        PCBServer.PreProcess;
+        GetPCBServer.PreProcess;
         try
             // Create text object
-            TextObj := PCBServer.PCBObjectFactory(eTextObject, eNoDimension, eCreate_Default);
+            TextObj := GetPCBServer.PCBObjectFactory(eTextObject, eNoDimension, eCreate_Default);
             if TextObj <> nil then
             begin
                 // Set position
@@ -309,7 +309,7 @@ begin
                 TextObj.Width := MMsToCoord(Size * 0.15); // Stroke width proportional to size
 
                 Board.AddPCBObject(TextObj);
-                PCBServer.SendMessageToRobots(Board.I_ObjectAddress, c_Broadcast, PCBM_BoardRegisteration, TextObj.I_ObjectAddress);
+                GetPCBServer.SendMessageToRobots(Board.I_ObjectAddress, c_Broadcast, PCBM_BoardRegisteration, TextObj.I_ObjectAddress);
 
                 AddJSONBoolean(ResultProps, 'success', True);
                 AddJSONProperty(ResultProps, 'message', 'Text added to board');
@@ -324,11 +324,11 @@ begin
                 AddJSONProperty(ResultProps, 'error', 'Failed to create text object');
             end;
         finally
-            PCBServer.PostProcess;
+            GetPCBServer.PostProcess;
         end;
 
         // Refresh view
-        Client.SendMessage('PCB:Zoom', 'Action=Redraw', 255, Client.CurrentView);
+        GetClient.SendMessage('PCB:Zoom', 'Action=Redraw', 255, GetClient.CurrentView);
 
         OutputLines := TStringList.Create;
         try
@@ -341,5 +341,7 @@ begin
         ResultProps.Free;
     end;
 end;
+
+
 
 end.

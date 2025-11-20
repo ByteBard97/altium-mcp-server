@@ -31,7 +31,7 @@ begin
     Iterator.AddFilter_IPCB_LayerSet(LayerSet.AllLayers);
     Iterator.AddFilter_Method(eProcessAll);
 
-    PCBServer.PreProcess;
+    GetPCBServer.PreProcess;
     
     OrigObj := Iterator.FirstPCBObject;
     while (OrigObj <> Nil) do
@@ -39,16 +39,16 @@ begin
         if OrigObj.Selected then
         begin
             // Replicate the object
-            NewObj := PCBServer.PCBObjectFactory(OrigObj.ObjectId, eNoDimension, eCreate_Default);
+            NewObj := GetPCBServer.PCBObjectFactory(OrigObj.ObjectId, eNoDimension, eCreate_Default);
             NewObj := OrigObj.Replicate;
 
             // Add to board
-            PCBServer.SendMessageToRobots(NewObj.I_ObjectAddress, c_Broadcast, PCBM_BeginModify, c_NoEventData);
+            GetPCBServer.SendMessageToRobots(NewObj.I_ObjectAddress, c_Broadcast, PCBM_BeginModify, c_NoEventData);
             Board.AddPCBObject(NewObj);
-            PCBServer.SendMessageToRobots(NewObj.I_ObjectAddress, c_Broadcast, PCBM_EndModify, c_NoEventData);
+            GetPCBServer.SendMessageToRobots(NewObj.I_ObjectAddress, c_Broadcast, PCBM_EndModify, c_NoEventData);
 
             // Send board registration message
-            //PCBServer.SendMessageToRobots(Board.I_ObjectAddress, c_Broadcast, PCBM_BoardRegisteration, NewObj.I_ObjectAddress);
+            //GetPCBServer.SendMessageToRobots(Board.I_ObjectAddress, c_Broadcast, PCBM_BoardRegisteration, NewObj.I_ObjectAddress);
             
             // Add to our list of duplicated objects
             DuplicatedObjects.Add(NewObj);
@@ -59,7 +59,7 @@ begin
     
     Board.BoardIterator_Destroy(Iterator);
 
-    PCBServer.PostProcess;
+    GetPCBServer.PostProcess;
 
     Board.ViewManager_FullUpdate();  
     
@@ -92,7 +92,7 @@ var
     Obj               : IPCB_Primitive;
 begin
     // Retrieve the current board
-    Board := PCBServer.GetCurrentPCBBoard;
+    Board := GetPCBServer.GetCurrentPCBBoard;
     if (Board = Nil) then
     begin
         Result := '{"success": false, "message": "No PCB document is currently active"}';
@@ -151,7 +151,7 @@ begin
         Iterator.AddFilter_IPCB_LayerSet(LayerSet.AllLayers);
         Iterator.AddFilter_Method(eProcessAll);
 
-        PCBServer.PreProcess;
+        GetPCBServer.PreProcess;
         Obj := Iterator.FirstPCBObject;
         while (Obj <> Nil) do
         begin
@@ -161,7 +161,7 @@ begin
             
             Obj := Iterator.NextPCBObject;
         end;
-        PCBServer.PostProcess;
+        GetPCBServer.PostProcess;
         Board.BoardIterator_Destroy(Iterator);
 
         // Select only the duplicated objects
@@ -243,10 +243,10 @@ begin
         end;
 
         // Reset selection for destination components
-        Client.SendMessage('PCB:DeSelect', 'Scope=All', 255, Client.CurrentView);
+        GetClient.SendMessage('PCB:DeSelect', 'Scope=All', 255, GetClient.CurrentView);
         
         // Have the user select destination components
-        Client.SendMessage('PCB:Select', 'Scope=InsideArea | ObjectKind=Component', 255, Client.CurrentView);
+        GetClient.SendMessage('PCB:Select', 'Scope=InsideArea | ObjectKind=Component', 255, GetClient.CurrentView);
         
         // Get the newly selected components (destination)
         SourceCmps.Clear();
@@ -419,7 +419,7 @@ var
     NetsToInvalidate: TStringList;
 begin
     // Retrieve the current board
-    Board := PCBServer.GetCurrentPCBBoard;
+    Board := GetPCBServer.GetCurrentPCBBoard;
     if (Board = Nil) then
     begin
         Result := '{"success": false, "error": "No PCB document is currently active"}';
@@ -455,7 +455,7 @@ begin
 
     try
         // Begin board modification
-        PCBServer.PreProcess;
+        GetPCBServer.PreProcess;
 
         // Collect all selected objects first - OPTIMIZATION #1
         // This is our biggest optimization - collecting all selected objects once
@@ -735,10 +735,10 @@ begin
         end;
 
         // End board modification
-        PCBServer.PostProcess;
+        GetPCBServer.PostProcess;
 
         // Force redraw of the view - once at the end
-        Client.SendMessage('PCB:Zoom', 'Action=Redraw', 255, Client.CurrentView);
+        GetClient.SendMessage('PCB:Zoom', 'Action=Redraw', 255, GetClient.CurrentView);
 
         // Update connectivity
         ResetParameters;

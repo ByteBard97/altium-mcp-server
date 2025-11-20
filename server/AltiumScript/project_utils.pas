@@ -7,15 +7,15 @@ unit project_utils;
 
 interface
 
-uses
-    Classes, SysUtils, PCB;
-
 function CreateProject(const ProjectName, ProjectPath, Template: String): String;
 function SaveProject: String;
 function GetProjectInfo: String;
 function CloseProject: String;
 
 implementation
+
+uses
+    globals;
 
 {..............................................................................}
 { CreateProject - Create a new Altium project with a blank PCB document        }
@@ -176,9 +176,9 @@ begin
             SchCount := 0;
             OtherCount := 0;
 
-            for i := 0 to Project.DM_DocumentCount - 1 do
+            for i := 0 to Project.DM_LogicalDocumentCount - 1 do
             begin
-                Doc := Project.DM_Documents(i);
+                Doc := Project.DM_LogicalDocuments(i);
                 if Doc <> nil then
                 begin
                     DocType := UpperCase(ExtractFileExt(Doc.DM_FileName));
@@ -194,9 +194,9 @@ begin
             // Build response
             JsonBuilder.Add('{');
             JsonBuilder.Add('  "success": true,');
-            JsonBuilder.Add('  "name": "' + ExtractFileName(Project.DM_ProjectFileName) + '",');
-            JsonBuilder.Add('  "path": "' + Project.DM_ProjectFullPath + '",');
-            JsonBuilder.Add('  "file_count": ' + IntToStr(Project.DM_DocumentCount) + ',');
+            JsonBuilder.Add('  "name": "' + JSONEscapeString(ExtractFileName(Project.DM_ProjectFileName)) + '",');
+            JsonBuilder.Add('  "path": "' + JSONEscapeString(Project.DM_ProjectFullPath) + '",');
+            JsonBuilder.Add('  "file_count": ' + IntToStr(Project.DM_LogicalDocumentCount) + ',');
             JsonBuilder.Add('  "pcb_count": ' + IntToStr(PCBCount) + ',');
             JsonBuilder.Add('  "schematic_count": ' + IntToStr(SchCount) + ',');
             JsonBuilder.Add('  "other_count": ' + IntToStr(OtherCount));
@@ -204,7 +204,7 @@ begin
 
             Result := JsonBuilder.Text;
         except
-            Result := '{"success": false, "error": "' + ExceptionMessage + '"}';
+            Result := '{"success": false, "error": "' + JSONEscapeString(ExceptionMessage) + '"}';
         end;
     finally
         JsonBuilder.Free;
@@ -258,5 +258,7 @@ begin
         JsonBuilder.Free;
     end;
 end;
+
+
 
 end.

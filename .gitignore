@@ -18,7 +18,18 @@ wheels/
 # Backup and temporary files
 *.backup
 *.save
+*.before_*
+*.exception_fix
+*.comprehensive_fix
+*.nested_fix
+*.monolithic_backup
+*_broken.pas
 nul
+
+# Screenshots and images
+*.JPG
+*.jpg
 
 # Virtual environments
 .venv
+/scripts-libraries
