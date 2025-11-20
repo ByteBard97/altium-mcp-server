@@ -11,11 +11,12 @@ function CreateProject(const ProjectName, ProjectPath, Template: String): String
 function SaveProject: String;
 function GetProjectInfo: String;
 function CloseProject: String;
+function OpenDocumentByPath(const DocumentPath, DocumentType: String): String;
 
 implementation
 
 uses
-    globals;
+    globals, json_utils;
 
 {..............................................................................}
 { CreateProject - Create a new Altium project with a blank PCB document        }
@@ -134,12 +135,16 @@ var
     Workspace: IWorkspace;
     Project: IProject;
     JsonBuilder: TStringList;
+    DocumentsArray: TStringList;
+    DocProps: TStringList;
     i: Integer;
     Doc: IDocument;
-    DocType: String;
+    DocType, DocKind: String;
     PCBCount, SchCount, OtherCount: Integer;
 begin
     JsonBuilder := TStringList.Create;
+    DocumentsArray := TStringList.Create;
+    DocProps := TStringList.Create;
     try
         Workspace := GetWorkspace;
         if Workspace = nil then
@@ -156,7 +161,7 @@ begin
         end;
 
         try
-            // Count document types
+            // Count document types and build documents array
             PCBCount := 0;
             SchCount := 0;
             OtherCount := 0;
@@ -166,6 +171,10 @@ begin
                 Doc := Project.DM_LogicalDocuments(i);
                 if Doc <> nil then
                 begin
+                    // Get document kind (verified in InteractiveHTMLBOM4Altium2.pas:67)
+                    DocKind := Doc.DM_DocumentKind;
+
+                    // Count by extension for backwards compatibility
                     DocType := UpperCase(ExtractFileExt(Doc.DM_FileName));
                     if (DocType = '.PCBDOC') or (DocType = '.PCB') then
                         PCBCount := PCBCount + 1
@@ -173,6 +182,15 @@ begin
                         SchCount := SchCount + 1
                     else
                         OtherCount := OtherCount + 1;
+
+                    // Build document object
+                    DocProps.Clear;
+                    AddJSONProperty(DocProps, 'kind', DocKind);
+                    AddJSONProperty(DocProps, 'file_name', ExtractFileName(Doc.DM_FileName));
+                    AddJSONProperty(DocProps, 'full_path', Doc.DM_FullPath);
+
+                    // Add document object to array
+                    DocumentsArray.Add(BuildJSONObject(DocProps, 2));
                 end;
             end;
 
@@ -184,7 +202,14 @@ begin
             JsonBuilder.Add('  "file_count": ' + IntToStr(Project.DM_LogicalDocumentCount) + ',');
             JsonBuilder.Add('  "pcb_count": ' + IntToStr(PCBCount) + ',');
             JsonBuilder.Add('  "schematic_count": ' + IntToStr(SchCount) + ',');
-            JsonBuilder.Add('  "other_count": ' + IntToStr(OtherCount));
+            JsonBuilder.Add('  "other_count": ' + IntToStr(OtherCount) + ',');
+
+            // Add documents array
+            if DocumentsArray.Count > 0 then
+                JsonBuilder.Add('  "documents": ' + BuildJSONArray(DocumentsArray, '', 1))
+            else
+                JsonBuilder.Add('  "documents": []');
+
             JsonBuilder.Add('}');
 
             Result := JsonBuilder.Text;
@@ -192,6 +217,8 @@ begin
             Result := '{"success": false, "error": "' + JSONEscapeString(ExceptionMessage) + '"}';
         end;
     finally
+        DocProps.Free;
+        DocumentsArray.Free;
         JsonBuilder.Free;
     end;
 end;
@@ -244,6 +271,83 @@ begin
     end;
 end;
 
+{..............................................................................}
+{ OpenDocumentByPath - Open and display a document by path                     }
+{ Based on verified examples:                                                  }
+{ - OpenSchDocs.pas:33 - Client.ShowDocument(Client.OpenDocument(...))        }
+{ - DesignReuse.pas:179 - Client.OpenDocument('PCB', ...)                     }
+{..............................................................................}
+function OpenDocumentByPath(const DocumentPath, DocumentType: String): String;
+var
+    JsonBuilder: TStringList;
+    OpenedDoc: IServerDocument;
+    Client: IClient;
+begin
+    JsonBuilder := TStringList.Create;
+    try
+        // Get the client interface
+        Client := GetClient;
+        if Client = nil then
+        begin
+            Result := '{"success": false, "error": "Could not access Altium client"}';
+            Exit;
+        end;
+
+        // Check if file exists
+        if not FileExists(DocumentPath) then
+        begin
+            Result := '{"success": false, "error": "Document file not found: ' + JSONEscapeString(DocumentPath) + '"}';
+            Exit;
+        end;
+
+        try
+            // Check if document is already open (verified in OpenSchDocs.pas:32)
+            if Client.IsDocumentOpen(DocumentPath) then
+            begin
+                // Document is already open, just show it
+                OpenedDoc := Client.OpenDocument(DocumentType, DocumentPath);
+                if OpenedDoc <> nil then
+                    Client.ShowDocument(OpenedDoc);
+
+                JsonBuilder.Add('{');
+                JsonBuilder.Add('  "success": true,');
+                JsonBuilder.Add('  "message": "Document was already open and has been brought to focus",');
+                JsonBuilder.Add('  "document_path": "' + JSONEscapeString(DocumentPath) + '",');
+                JsonBuilder.Add('  "document_type": "' + DocumentType + '"');
+                JsonBuilder.Add('}');
+            end
+            else
+            begin
+                // Open and show the document (verified in OpenSchDocs.pas:33)
+                OpenedDoc := Client.OpenDocument(DocumentType, DocumentPath);
+                if OpenedDoc <> nil then
+                begin
+                    Client.ShowDocument(OpenedDoc);
+
+                    JsonBuilder.Add('{');
+                    JsonBuilder.Add('  "success": true,');
+                    JsonBuilder.Add('  "message": "Document opened successfully",');
+                    JsonBuilder.Add('  "document_path": "' + JSONEscapeString(DocumentPath) + '",');
+                    JsonBuilder.Add('  "document_type": "' + DocumentType + '"');
+                    JsonBuilder.Add('}');
+                end
+                else
+                begin
+                    JsonBuilder.Add('{');
+                    JsonBuilder.Add('  "success": false,');
+                    JsonBuilder.Add('  "error": "Failed to open document. Verify the document type is correct."');
+                    JsonBuilder.Add('}');
+                end;
+            end;
+
+            Result := JsonBuilder.Text;
+        except
+            Result := '{"success": false, "error": "' + JSONEscapeString(ExceptionMessage) + '"}';
+        end;
+    finally
+        JsonBuilder.Free;
+    end;
+end;
 
 
 end.

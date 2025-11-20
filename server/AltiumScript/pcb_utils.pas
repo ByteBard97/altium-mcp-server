@@ -17,6 +17,7 @@ function GetAllComponentData(ROOT_DIR: String; SelectedOnly: Boolean = False): S
 function GetSelectedComponentsCoordinates(ROOT_DIR: String): String;
 function GetComponentPinsFromList(ROOT_DIR: String; DesignatorsList: TStringList): String;
 function MoveComponentsByDesignators(DesignatorsList: TStringList; XOffset, YOffset: TCoord; Rotation: TAngle): String;
+function GetBoardOutline(ROOT_DIR: String): String;
 
 implementation
 
@@ -981,6 +982,55 @@ begin
     end;
 end;
 
+{..............................................................................}
+{ Get Board Outline - Extract board outline coordinates as polygon            }
+{..............................................................................}
+function GetBoardOutline(ROOT_DIR: String): String;
+var
+    Board          : IPCB_Board;
+    PointsArray    : TStringList;
+    i              : Integer;
+    X, Y           : Double;
+begin
+    // Retrieve the current board
+    Board := GetPCBServer.GetCurrentPCBBoard;
+    if (Board = nil) then
+    begin
+        Result := '[]';
+        Exit;
+    end;
+
+    // Rebuild and validate board outline
+    Board.BoardOutline.Invalidate;
+    Board.BoardOutline.Rebuild;
+    Board.BoardOutline.Validate;
+
+    // Create array for outline points
+    PointsArray := TStringList.Create;
+
+    try
+        // Step through each vertex of the Board Outline
+        for i := 0 to Board.BoardOutline.PointCount - 1 do
+        begin
+            // Only process line segments (not arcs) for simplicity
+            // This creates a polygon approximation
+            if Board.BoardOutline.Segments[i].Kind = ePolySegmentLine then
+            begin
+                // Convert from internal units to mils (consistent with rest of pcb_utils.pas)
+                X := CoordToMils(Board.BoardOutline.Segments[i].vx - Board.XOrigin);
+                Y := CoordToMils(Board.BoardOutline.Segments[i].vy - Board.YOrigin);
+
+                // Add as JSON array [x, y]
+                PointsArray.Add('[' + FloatToStr(X) + ',' + FloatToStr(Y) + ']');
+            end;
+        end;
+
+        // Build and return the JSON array directly
+        Result := BuildJSONArray(PointsArray);
+    finally
+        PointsArray.Free;
+    end;
+end;
 
 
 end.

@@ -9,6 +9,7 @@ uses
     PCB, Classes, SysUtils, globals, json_utils, project_utils, library_utils;
 
 function ExecuteCreateProject(RequestData: TStringList): String;
+function ExecuteOpenDocument(RequestData: TStringList): String;
 function ExecuteSearchComponents(RequestData: TStringList): String;
 function ExecuteGetComponentFromLibrary(RequestData: TStringList): String;
 function ExecuteSearchFootprints(RequestData: TStringList): String;
@@ -51,6 +52,40 @@ begin
             Result := CreateProject(ProjectName, ProjectPath, Template)
         else
             Result := '{"success": false, "error": "Missing required parameters"}';
+    except
+            Result := '{"success": false, "error": "' + ExceptionMessage + '"}';
+    end;
+end;
+
+function ExecuteOpenDocument(RequestData: TStringList): String;
+var
+    i, ValueStart: Integer;
+    DocumentPath, DocumentType: String;
+begin
+    DocumentPath := '';
+    DocumentType := '';
+
+    try
+        for i := 0 to RequestData.Count - 1 do
+        begin
+            if (Pos('"document_path"', RequestData[i]) > 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                DocumentPath := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                DocumentPath := TrimJSON(DocumentPath);
+            end
+            else if (Pos('"document_type"', RequestData[i]) > 0) then
+            begin
+                ValueStart := Pos(':', RequestData[i]) + 1;
+                DocumentType := Copy(RequestData[i], ValueStart, Length(RequestData[i]) - ValueStart + 1);
+                DocumentType := TrimJSON(DocumentType);
+            end;
+        end;
+
+        if (DocumentPath <> '') and (DocumentType <> '') then
+            Result := OpenDocumentByPath(DocumentPath, DocumentType)
+        else
+            Result := '{"success": false, "error": "Missing required parameters: document_path and document_type"}';
     except
             Result := '{"success": false, "error": "' + ExceptionMessage + '"}';
     end;

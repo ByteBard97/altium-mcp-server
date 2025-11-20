@@ -5,6 +5,9 @@ Includes DRC history tracking and circuit pattern recognition
 import json
 from typing import TYPE_CHECKING
 from pathlib import Path
+import sys
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from response_helpers import format_large_response_summary
 
 if TYPE_CHECKING:
     from mcp.server.fastmcp import FastMCP
@@ -207,3 +210,74 @@ def register_analysis_tools(mcp: "FastMCP", altium_bridge: "AltiumBridge"):
             "success": True,
             "run": run_details
         }, indent=2)
+
+    @mcp.tool()
+    async def check_schematic_pcb_sync() -> str:
+        """
+        Check synchronization between schematic and PCB components
+
+        This tool compares the components in the schematic with those in the PCB
+        to identify synchronization issues. It checks:
+        - Components present in schematic but missing from PCB
+        - Components present in PCB but missing from schematic
+        - Components with matching unique IDs but different designators
+
+        The comparison is based on UniqueId (schematic) and SourceUniqueId (PCB),
+        which provides a reliable link between schematic and PCB components.
+
+        Returns:
+            JSON object containing:
+            - success: Boolean indicating if the check completed successfully
+            - in_sync: Boolean indicating if schematic and PCB are fully synchronized
+            - schematic_only: Array of components only in schematic (missing from PCB)
+            - pcb_only: Array of components only in PCB (missing from schematic)
+            - designator_mismatches: Array of components with same UniqueId but different designators
+            - matched_count: Number of perfectly matched components
+            - total_schematic: Total number of components in schematic
+            - total_pcb: Total number of components in PCB
+
+        Example output:
+        {
+          "success": true,
+          "in_sync": false,
+          "schematic_only": [
+            {"designator": "R10", "unique_id": "ABC123"}
+          ],
+          "pcb_only": [
+            {"designator": "C5", "source_unique_id": "DEF456"}
+          ],
+          "designator_mismatches": [
+            {
+              "schematic_designator": "R1",
+              "pcb_designator": "R2",
+              "unique_id": "XYZ789"
+            }
+          ],
+          "matched_count": 25,
+          "total_schematic": 26,
+          "total_pcb": 26
+        }
+        """
+        response = await altium_bridge.call_script("check_schematic_pcb_sync", {})
+
+        if not response.success:
+            return json.dumps({
+                "success": False,
+                "error": f"Failed to check synchronization: {response.error}"
+            })
+
+        sync_data = response.data
+
+        if not sync_data:
+            return json.dumps({
+                "success": False,
+                "error": "No synchronization data returned. Please ensure both schematic and PCB documents are open."
+            })
+
+        # Handle large responses by writing to disk if needed
+        output_dir = altium_bridge.mcp_dir / "large_responses"
+        return format_large_response_summary(
+            sync_data,
+            output_dir,
+            "schematic_pcb_sync"
+        )

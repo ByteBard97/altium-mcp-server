@@ -4,6 +4,9 @@ Schematic-related tool handlers
 import json
 from pathlib import Path
 from typing import TYPE_CHECKING
+import sys
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from response_helpers import format_large_response_summary
 
 if TYPE_CHECKING:
     from mcp.server.fastmcp import FastMCP
@@ -164,3 +167,55 @@ def register_schematic_tools(mcp: "FastMCP", altium_bridge: "AltiumBridge"):
             return json.dumps(result, indent=2)
         except Exception as e:
             return json.dumps({"error": f"Failed to process schematic data: {str(e)}"})
+
+    @mcp.tool()
+    async def get_schematic_components_with_parameters() -> str:
+        """
+        Get all schematic component parameters for BOM analysis
+
+        This function exports all components from the flattened schematic hierarchy
+        with their basic properties (designator, lib_reference, description, footprint)
+        and all associated parameters. This is useful for:
+        - BOM generation and analysis
+        - Component parameter auditing
+        - Design validation
+        - Export to external tools
+
+        Returns:
+            JSON array with all components and their parameters
+
+        Example output:
+        [
+          {
+            "designator": "R1",
+            "lib_reference": "RES",
+            "description": "100k 0402 1% 50V",
+            "footprint": "RESC1005X40N",
+            "parameters": {
+              "Manufacturer": "Yageo",
+              "Part Number": "RC0402FR-07100KL",
+              "Value": "100k",
+              "Tolerance": "1%",
+              "Power": "1/16W"
+            }
+          },
+          ...
+        ]
+        """
+        response = await altium_bridge.call_script("get_schematic_components_with_parameters", {})
+
+        if not response.success:
+            return json.dumps({"error": f"Failed to get component parameters: {response.error}"})
+
+        components_data = response.data
+
+        if not components_data:
+            return json.dumps({"error": "No component data found. Please ensure a project is open and compiled."})
+
+        # Handle large responses by writing to disk if needed
+        output_dir = altium_bridge.mcp_dir / "large_responses"
+        return format_large_response_summary(
+            components_data,
+            output_dir,
+            "schematic_components_with_parameters"
+        )

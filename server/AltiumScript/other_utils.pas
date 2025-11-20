@@ -102,6 +102,7 @@ begin
        (CommandName = 'get_all_nets')                        or
        (CommandName = 'get_component_pins')                  or
        (CommandName = 'get_pcb_layers')                      or
+       (CommandName = 'get_board_outline')                   or
        (CommandName = 'get_pcb_rules')                       or
        (CommandName = 'get_selected_components_coordinates') or
        (CommandName = 'layout_duplicator')                   or

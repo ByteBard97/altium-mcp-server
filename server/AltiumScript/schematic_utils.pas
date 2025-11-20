@@ -10,6 +10,8 @@ function StrToPinOrientation(Orient: String): TRotationBy90;
 function GetLibrarySymbolReference(ROOT_DIR: String): String;
 function CreateSchematicSymbol(SymbolName: String; PinsList: TStringList): String;
 function GetSchematicData(ROOT_DIR: String): String;
+function GetSchematicComponentsWithParameters(ROOT_DIR: String): String;
+function CheckSchematicPCBSync(ROOT_DIR: String): String;
 
 implementation
 
@@ -559,6 +561,349 @@ begin
     end;
 end;
 
+// Function to get all schematic component parameters for BOM analysis
+function GetSchematicComponentsWithParameters(ROOT_DIR: String): String;
+var
+    Workspace       : IWorkspace;
+    Project         : IProject;
+    FlatHierarchy   : IDocument;
+    ComponentNum    : Integer;
+    Component       : IComponent;
+    Part            : IPart;
+    ParameterNum    : Integer;
+    Parameter       : IParameter;
+    ComponentsArray : TStringList;
+    CompProps       : TStringList;
+    ParamsProps     : TStringList;
+    OutputLines     : TStringList;
+    Designator      : String;
+    LibReference    : String;
+    Description     : String;
+    Footprint       : String;
+    ParameterName   : String;
+    ParameterValue  : String;
+begin
+    Result := '';
+
+    // Get workspace and project
+    Workspace := GetWorkspace;
+    Project := Workspace.DM_FocusedProject;
+
+    If (Project = Nil) Then
+    begin
+        Result := '{"error": "No project is currently open"}';
+        Exit;
+    end;
+
+    // Compile project
+    Project.DM_Compile;
+
+    // Get flattened hierarchy
+    FlatHierarchy := Project.DM_DocumentFlattened;
+
+    If (FlatHierarchy = Nil) Then
+    begin
+        Result := '{"error": "Failed to get flattened project. Please compile the project first."}';
+        Exit;
+    end;
+
+    // Create array for components
+    ComponentsArray := TStringList.Create;
+
+    try
+        // Iterate through all components
+        For ComponentNum := 0 to FlatHierarchy.DM_ComponentCount - 1 do
+        begin
+            Component := FlatHierarchy.DM_Components(ComponentNum);
+
+            // Create component properties
+            CompProps := TStringList.Create;
+
+            try
+                // Get the first subpart to access component properties
+                // (Much information can only be retrieved from subparts)
+                If Component.DM_SubPartCount > 0 Then
+                begin
+                    Part := Component.DM_SubParts(0);
+
+                    // Get basic component properties
+                    Designator := Part.DM_PhysicalDesignator;
+                    LibReference := Part.DM_LibraryReference;
+                    Description := Part.DM_Description;
+                    Footprint := Part.DM_Footprint;
+
+                    // Add basic properties
+                    AddJSONProperty(CompProps, 'designator', Designator);
+                    AddJSONProperty(CompProps, 'lib_reference', LibReference);
+                    AddJSONProperty(CompProps, 'description', Description);
+                    AddJSONProperty(CompProps, 'footprint', Footprint);
+
+                    // Get all parameters
+                    ParamsProps := TStringList.Create;
+                    try
+                        For ParameterNum := 0 to Component.DM_ParameterCount - 1 do
+                        begin
+                            Parameter := Component.DM_Parameters(ParameterNum);
+                            ParameterName := Parameter.DM_Name;
+                            ParameterValue := Parameter.DM_Value;
+
+                            // Add parameter to the list
+                            AddJSONProperty(ParamsProps, ParameterName, ParameterValue);
+                        end;
+
+                        // Add parameters object to component
+                        CompProps.Add('"parameters": ' + BuildJSONObject(ParamsProps, 2));
+
+                        // Add to components array
+                        ComponentsArray.Add(BuildJSONObject(CompProps, 1));
+                    finally
+                        ParamsProps.Free;
+                    end;
+                end;
+            finally
+                CompProps.Free;
+            end;
+        end;
+
+        // Build the final JSON array
+        OutputLines := TStringList.Create;
+        try
+            OutputLines.Text := BuildJSONArray(ComponentsArray);
+            Result := WriteJSONToFile(OutputLines, ROOT_DIR+'temp_bom_components.json');
+        finally
+            OutputLines.Free;
+        end;
+    finally
+        ComponentsArray.Free;
+    end;
+end;
+
+// Function to check synchronization between schematic and PCB components
+function CheckSchematicPCBSync(ROOT_DIR: String): String;
+var
+    Workspace           : IWorkspace;
+    Project             : IProject;
+    FlatHierarchy       : IDocument;
+    Board               : IPCB_Board;
+    Iterator            : IPCB_BoardIterator;
+    ComponentNum        : Integer;
+    SchComponent        : IComponent;
+    PCBComponent        : IPCB_Component;
+    Part                : IPart;
+
+    // Hash tables for tracking components (using TStringList as hash map)
+    SchUniqueIdMap      : TStringList;  // Maps UniqueId -> Designator
+    PCBSourceIdMap      : TStringList;  // Maps SourceUniqueId -> Designator
+
+    // Result arrays
+    SchOnlyArray        : TStringList;
+    PCBOnlyArray        : TStringList;
+    MismatchArray       : TStringList;
+
+    // Individual component properties
+    SchItemProps        : TStringList;
+    PCBItemProps        : TStringList;
+    MismatchProps       : TStringList;
+
+    // Result properties
+    ResultProps         : TStringList;
+    OutputLines         : TStringList;
+
+    SchDesignator       : String;
+    PCBDesignator       : String;
+    UniqueId            : String;
+    SourceUniqueId      : String;
+
+    MatchedCount        : Integer;
+    TotalSchCount       : Integer;
+    TotalPCBCount       : Integer;
+    InSync              : Boolean;
+    i                   : Integer;
+begin
+    Result := '';
+
+    // Get workspace and project
+    Workspace := GetWorkspace;
+    Project := Workspace.DM_FocusedProject;
+
+    If (Project = Nil) Then
+    begin
+        Result := '{"error": "No project is currently open"}';
+        Exit;
+    end;
+
+    // Compile project to get latest schematic data
+    Project.DM_Compile;
+
+    // Get flattened hierarchy for schematic components
+    FlatHierarchy := Project.DM_DocumentFlattened;
+
+    If (FlatHierarchy = Nil) Then
+    begin
+        Result := '{"error": "Failed to get flattened project. Please compile the project first."}';
+        Exit;
+    end;
+
+    // Get current PCB board
+    Board := GetPCBServer.GetCurrentPCBBoard;
+    if (Board = nil) then
+    begin
+        Result := '{"error": "No PCB document is currently open"}';
+        Exit;
+    end;
+
+    // Initialize hash maps and result arrays
+    SchUniqueIdMap := TStringList.Create;
+    PCBSourceIdMap := TStringList.Create;
+    SchOnlyArray := TStringList.Create;
+    PCBOnlyArray := TStringList.Create;
+    MismatchArray := TStringList.Create;
+
+    try
+        // Build schematic components map
+        TotalSchCount := FlatHierarchy.DM_ComponentCount;
+
+        For ComponentNum := 0 to TotalSchCount - 1 do
+        begin
+            SchComponent := FlatHierarchy.DM_Components(ComponentNum);
+
+            // Get the first subpart to access component properties
+            If SchComponent.DM_SubPartCount > 0 Then
+            begin
+                Part := SchComponent.DM_SubParts(0);
+                SchDesignator := Part.DM_PhysicalDesignator;
+                UniqueId := SchComponent.DM_UniqueId;
+
+                // Store in map: UniqueId -> Designator
+                SchUniqueIdMap.Add(UniqueId + '=' + SchDesignator);
+            end;
+        end;
+
+        // Build PCB components map
+        Iterator := Board.BoardIterator_Create;
+        Iterator.AddFilter_ObjectSet(MkSet(eComponentObject));
+        Iterator.AddFilter_IPCB_LayerSet(LayerSet.AllLayers);
+        Iterator.AddFilter_Method(eProcessAll);
+
+        TotalPCBCount := 0;
+        PCBComponent := Iterator.FirstPCBObject;
+        while (PCBComponent <> Nil) do
+        begin
+            PCBDesignator := PCBComponent.Name.Text;
+            SourceUniqueId := PCBComponent.SourceUniqueId;
+
+            // Store in map: SourceUniqueId -> Designator
+            PCBSourceIdMap.Add(SourceUniqueId + '=' + PCBDesignator);
+            TotalPCBCount := TotalPCBCount + 1;
+
+            // Move to next component
+            PCBComponent := Iterator.NextPCBObject;
+        end;
+
+        Board.BoardIterator_Destroy(Iterator);
+
+        // Compare schematic components against PCB
+        MatchedCount := 0;
+
+        For i := 0 to SchUniqueIdMap.Count - 1 do
+        begin
+            UniqueId := SchUniqueIdMap.Names[i];
+            SchDesignator := SchUniqueIdMap.ValueFromIndex[i];
+
+            // Check if this UniqueId exists in PCB
+            if PCBSourceIdMap.IndexOfName(UniqueId) >= 0 then
+            begin
+                // Found match - check if designators match
+                PCBDesignator := PCBSourceIdMap.Values[UniqueId];
+
+                if SchDesignator = PCBDesignator then
+                begin
+                    // Perfect match
+                    MatchedCount := MatchedCount + 1;
+                end
+                else
+                begin
+                    // UniqueId matches but designators differ
+                    MismatchProps := TStringList.Create;
+                    try
+                        AddJSONProperty(MismatchProps, 'schematic_designator', SchDesignator);
+                        AddJSONProperty(MismatchProps, 'pcb_designator', PCBDesignator);
+                        AddJSONProperty(MismatchProps, 'unique_id', UniqueId);
+                        MismatchArray.Add(BuildJSONObject(MismatchProps, 2));
+                    finally
+                        MismatchProps.Free;
+                    end;
+                end;
+            end
+            else
+            begin
+                // Component exists in schematic but not in PCB
+                SchItemProps := TStringList.Create;
+                try
+                    AddJSONProperty(SchItemProps, 'designator', SchDesignator);
+                    AddJSONProperty(SchItemProps, 'unique_id', UniqueId);
+                    SchOnlyArray.Add(BuildJSONObject(SchItemProps, 2));
+                finally
+                    SchItemProps.Free;
+                end;
+            end;
+        end;
+
+        // Find PCB components that don't exist in schematic
+        For i := 0 to PCBSourceIdMap.Count - 1 do
+        begin
+            SourceUniqueId := PCBSourceIdMap.Names[i];
+            PCBDesignator := PCBSourceIdMap.ValueFromIndex[i];
+
+            // Check if this SourceUniqueId exists in schematic
+            if SchUniqueIdMap.IndexOfName(SourceUniqueId) < 0 then
+            begin
+                // Component exists in PCB but not in schematic
+                PCBItemProps := TStringList.Create;
+                try
+                    AddJSONProperty(PCBItemProps, 'designator', PCBDesignator);
+                    AddJSONProperty(PCBItemProps, 'source_unique_id', SourceUniqueId);
+                    PCBOnlyArray.Add(BuildJSONObject(PCBItemProps, 2));
+                finally
+                    PCBItemProps.Free;
+                end;
+            end;
+        end;
+
+        // Determine if in sync
+        InSync := (SchOnlyArray.Count = 0) and (PCBOnlyArray.Count = 0) and (MismatchArray.Count = 0);
+
+        // Build final result JSON
+        ResultProps := TStringList.Create;
+        try
+            AddJSONBoolean(ResultProps, 'success', True);
+            AddJSONBoolean(ResultProps, 'in_sync', InSync);
+            ResultProps.Add('"schematic_only": ' + BuildJSONArray(SchOnlyArray, '', 1));
+            ResultProps.Add('"pcb_only": ' + BuildJSONArray(PCBOnlyArray, '', 1));
+            ResultProps.Add('"designator_mismatches": ' + BuildJSONArray(MismatchArray, '', 1));
+            AddJSONInteger(ResultProps, 'matched_count', MatchedCount);
+            AddJSONInteger(ResultProps, 'total_schematic', TotalSchCount);
+            AddJSONInteger(ResultProps, 'total_pcb', TotalPCBCount);
+
+            OutputLines := TStringList.Create;
+            try
+                OutputLines.Text := BuildJSONObject(ResultProps);
+                Result := WriteJSONToFile(OutputLines, ROOT_DIR+'temp_sync_check.json');
+            finally
+                OutputLines.Free;
+            end;
+        finally
+            ResultProps.Free;
+        end;
+
+    finally
+        SchUniqueIdMap.Free;
+        PCBSourceIdMap.Free;
+        SchOnlyArray.Free;
+        PCBOnlyArray.Free;
+        MismatchArray.Free;
+    end;
+end;
 
 
 end.

@@ -38,11 +38,17 @@ begin
         'create_schematic_symbol':
             Result := ExecuteCreateSchematicSymbol(RequestData);            
         'get_schematic_data':
-            Result := GetSchematicData(ROOT_DIR);            
+            Result := GetSchematicData(ROOT_DIR);
+        'get_schematic_components_with_parameters':
+            Result := GetSchematicComponentsWithParameters(ROOT_DIR);
+        'check_schematic_pcb_sync':
+            Result := CheckSchematicPCBSync(ROOT_DIR);
         'get_pcb_layers':
-            Result := GetPCBLayers(ROOT_DIR);            
+            Result := GetPCBLayers(ROOT_DIR);
+        'get_board_outline':
+            Result := GetBoardOutline(ROOT_DIR);
         'set_pcb_layer_visibility':
-            Result := ExecuteSetPCBLayerVisibility(RequestData);   
+            Result := ExecuteSetPCBLayerVisibility(RequestData);
         'get_pcb_layer_stackup':
             Result := GetPCBLayerStackup(ROOT_DIR);         
         'get_selected_components_coordinates':
@@ -76,6 +82,8 @@ begin
             Result := GetProjectInfo;
         'close_project':
             Result := CloseProject;
+        'open_document':
+            Result := ExecuteOpenDocument(RequestData);
         // Phase 2: Library Search
         'list_component_libraries':
             Result := ListComponentLibraries;
