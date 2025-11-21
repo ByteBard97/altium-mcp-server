@@ -1021,11 +1021,14 @@ begin
 
     try
         // Step through each vertex of the Board Outline
+        // WARNING: Arc interpolation below has bugs - coordinate system issues
+        // TODO: Debug and fix arc interpolation logic
         for i := 0 to Board.BoardOutline.PointCount - 1 do
         begin
             Seg := Board.BoardOutline.Segments[i];
 
             // For arc segments, add interpolated points BEFORE the endpoint
+            // BUG: This interpolation has coordinate system issues
             if Seg.Kind = ePolySegmentArc then
             begin
                 // Extract arc properties and convert to mils
