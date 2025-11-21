@@ -43,6 +43,8 @@ begin
             Result := GetSchematicComponentsWithParameters(ROOT_DIR);
         'check_schematic_pcb_sync':
             Result := CheckSchematicPCBSync(ROOT_DIR);
+        'get_whole_design_json':
+            Result := GetWholeDesignJSON(ROOT_DIR);
         'get_pcb_layers':
             Result := GetPCBLayers(ROOT_DIR);
         'get_board_outline':

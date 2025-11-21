@@ -2,7 +2,7 @@
 // Auto-generated combined script - DO NOT EDIT DIRECTLY
 // Edit source files and run build_script.py instead
 //
-// Generated from 18 source files:
+// Generated from 19 source files:
 //   - globals.pas
 //   - json_utils.pas
 //   - helpers.pas
@@ -21,6 +21,7 @@
 //   - command_executors_placement.pas
 //   - command_router.pas
 //   - check_pcb_utils.pas
+//   - ReloadAndCompile.pas
 
 uses
     PCB, SCH, Workspace, Classes, SysUtils;
@@ -142,6 +143,7 @@ function CreateSchematicSymbol(SymbolName: String; PinsList: TStringList): Strin
 function GetSchematicData(ROOT_DIR: String): String; forward;
 function GetSchematicComponentsWithParameters(ROOT_DIR: String): String; forward;
 function CheckSchematicPCBSync(ROOT_DIR: String): String; forward;
+function GetWholeDesignJSON(ROOT_DIR: String): String; forward;
 
 // From command_executors_board.pas
 function ExecuteSetBoardSize(RequestData: TStringList): String; forward;
@@ -4108,48 +4110,15 @@ begin
 
     try
         // Step through each vertex of the Board Outline
+        // For now, just export ALL vertices (both line and arc endpoints)
+        // TODO: Implement proper arc interpolation once we understand the coordinate system
         for i := 0 to Board.BoardOutline.PointCount - 1 do
         begin
-            Seg := Board.BoardOutline.Segments[i];
+            // Convert from internal units to mils
+            X := CoordToMils(Board.BoardOutline.Segments[i].vx - Board.XOrigin);
+            Y := CoordToMils(Board.BoardOutline.Segments[i].vy - Board.YOrigin);
 
-            // For arc segments, add interpolated points BEFORE the endpoint
-            if Seg.Kind = ePolySegmentArc then
-            begin
-                // Extract arc properties and convert to mils
-                CenterX := CoordToMils(Seg.cx - Board.XOrigin);
-                CenterY := CoordToMils(Seg.cy - Board.YOrigin);
-                Radius := CoordToMils(Seg.Radius);
-                StartAngle := Seg.Angle1;
-                EndAngle := Seg.Angle2;
-
-                // Calculate number of steps for smooth arc (16 points)
-                NumSteps := 16;
-
-                // Handle angle wrapping (e.g., 270 to 0 degrees)
-                if EndAngle < StartAngle then
-                    EndAngle := EndAngle + 360;
-
-                AngleStep := (EndAngle - StartAngle) / NumSteps;
-
-                // Generate interpolated points along the arc (excluding endpoints)
-                for j := 1 to NumSteps - 1 do
-                begin
-                    CurrentAngle := StartAngle + (j * AngleStep);
-
-                    // Convert angle to radians and calculate point on arc
-                    ArcX := CenterX + Radius * Cos(CurrentAngle * PI / 180);
-                    ArcY := CenterY + Radius * Sin(CurrentAngle * PI / 180);
-
-                    // Add interpolated point
-                    PointsArray.Add('[' + FloatToStr(ArcX) + ',' + FloatToStr(ArcY) + ']');
-                end;
-            end;
-
-            // Convert endpoint from internal units to mils
-            X := CoordToMils(Seg.vx - Board.XOrigin);
-            Y := CoordToMils(Seg.vy - Board.YOrigin);
-
-            // Add vertex endpoint as JSON array [x, y]
+            // Add as JSON array [x, y]
             PointsArray.Add('[' + FloatToStr(X) + ',' + FloatToStr(Y) + ']');
         end;
 
@@ -5798,6 +5767,293 @@ begin
     end;
 end;
 
+// Function to get the entire schematic design in one JSON call
+// This combines component data, parameters, pins, and nets
+// Uses ONLY verified DM (Design Manager) interface methods from working examples
+
+function GetWholeDesignJSON(ROOT_DIR: String): String;
+var
+    Workspace       : IWorkspace;
+    Project         : IProject;
+    Doc             : IDocument;
+    FlatHierarchy   : IDocument;
+    Net             : INet;
+    DMComp          : IComponent;
+    DMPart          : IPart;
+    DMPin           : IPin;
+    NetPin          : INetItem;
+
+    ComponentsArray : TStringList;
+    CompProps       : TStringList;
+    PinsArray       : TStringList;
+    PinProps        : TStringList;
+    NetsArray       : TStringList;
+    NetProps        : TStringList;
+    OutputLines     : TStringList;
+    ResultProps     : TStringList;
+    PinNetMap       : TStringList;
+
+    Designator      : String;
+    Description     : String;
+    Footprint       : String;
+    SheetName       : String;
+    PinNumber       : String;
+    PinName         : String;
+    NetName         : String;
+
+    i, j, k         : Integer;
+    PartIdx         : Integer;
+    PinIdx          : Integer;
+begin
+    Result := '';
+
+    // VERIFIED: GetWorkspace and DM_FocusedProject (from GetPinData.pas line 89)
+    Workspace := GetWorkspace;
+    Project := Workspace.DM_FocusedProject;
+
+    If (Project = Nil) Then
+    begin
+        Result := '{"error": "No project is currently open"}';
+        Exit;
+    end;
+
+    // ALWAYS trigger full IDE compilation to ensure net connectivity data is populated
+    ResetParameters;
+    AddStringParameter('Action', 'Compile');
+    AddStringParameter('ObjectKind', 'Project');
+    RunProcess('WorkspaceManager:Compile');
+
+    // Wait for compilation to complete
+    Sleep(8000);  // Wait 8 seconds for compilation to finish
+
+    // VERIFIED: DM_Compile (from GetPinData.pas line 90)
+    // Call DM_Compile AFTER RunProcess to refresh the Design Manager data
+    Project.DM_Compile;
+
+    // Verify compilation succeeded
+    FlatHierarchy := Project.DM_DocumentFlattened;
+    If (FlatHierarchy = Nil) Then
+    Begin
+        Result := '{"error": "Project compilation failed - DM_DocumentFlattened is still nil after compilation"}';
+        Exit;
+    End;
+
+    // Create main data structures
+    ComponentsArray := TStringList.Create;
+
+    // First pass: Build pin-to-net mapping using VERIFIED method from GetPinData.pas
+    // This uses INetItem.DM_NetName instead of IPin.DM_FlattenedNetName
+    PinNetMap := TStringList.Create;
+    // Don't sort - we need to use .Values assignment
+    PinNetMap.Duplicates := dupIgnore;
+
+    try
+        // Build pin-to-net map by iterating through nets (GetPinData.pas approach)
+        For i := 0 to Project.DM_LogicalDocumentCount - 1 Do
+        Begin
+            Doc := Project.DM_LogicalDocuments(i);
+
+            If Doc.DM_DocumentKind = 'SCH' Then
+            Begin
+                // VERIFIED: DM_NetCount and DM_Nets (from GetPinData.pas line 114, 116)
+                For j := 0 to Doc.DM_NetCount - 1 Do
+                Begin
+                    Net := Doc.DM_Nets(j);
+
+                    // Get net name from first pin (GetPinData.pas line 121, 65)
+                    NetName := '';
+                    if Net.DM_PinCount > 0 then
+                    begin
+                        NetPin := Net.DM_Pins(0);
+                        // VERIFIED: DM_NetName on INetItem (GetPinData.pas line 65)
+                        NetName := NetPin.DM_NetName;
+                    end;
+
+                    // Map all pins in this net to the net name
+                    // VERIFIED: DM_PinCount and DM_Pins (from GetPinData.pas line 121, 122)
+                    For k := 0 to Net.DM_PinCount - 1 Do
+                    Begin
+                        NetPin := Net.DM_Pins(k);
+                        // Create unique key: ComponentDesignator|PinNumber
+                        // VERIFIED: DM_LogicalPartDesignator (GetPinData.pas line 124) and DM_PinNumber (line 66)
+                        PinNetMap.Values[NetPin.DM_LogicalPartDesignator + '|' + NetPin.DM_PinNumber] := NetName;
+                    End;
+                End;
+            End;
+        End;
+
+        // Second pass: Get component data
+        // VERIFIED: DM_LogicalDocumentCount and DM_LogicalDocuments (from GetPinData.pas line 109, 111)
+        For i := 0 to Project.DM_LogicalDocumentCount - 1 Do
+        Begin
+            Doc := Project.DM_LogicalDocuments(i);
+
+            // VERIFIED: DM_DocumentKind (from examples)
+            If Doc.DM_DocumentKind = 'SCH' Then
+            Begin
+                SheetName := ExtractFileName(Doc.DM_FullPath);
+
+                // VERIFIED: DM_ComponentCount and DM_Components (from FindUnmatchedPorts.pas line 222, 224)
+                For j := 0 to Doc.DM_ComponentCount - 1 Do
+                Begin
+                    DMComp := Doc.DM_Components(j);
+
+                    // Create component properties
+                    CompProps := TStringList.Create;
+                    try
+                        // VERIFIED: DM_LogicalDesignator (from FindUnmatchedPorts.pas line 253)
+                        Designator := DMComp.DM_LogicalDesignator;
+
+                        // Basic properties
+                        AddJSONProperty(CompProps, 'designator', Designator);
+                        AddJSONProperty(CompProps, 'sheet', SheetName);
+
+                        // Get pins with nets - VERIFIED approach from GetCompNets function
+                        PinsArray := TStringList.Create;
+                        try
+                            // VERIFIED: DM_SubPartCount (from FindUnmatchedPorts.pas line 602)
+                            if (DMComp.DM_SubPartCount = 1) then
+                            begin
+                                // VERIFIED: DM_PinCount and DM_Pins (from FindUnmatchedPorts.pas line 595, 597)
+                                for PinIdx := 0 to DMComp.DM_PinCount - 1 do
+                                begin
+                                    DMPin := DMComp.DM_Pins(PinIdx);
+
+                                    PinProps := TStringList.Create;
+                                    try
+                                        // Look up net name from PinNetMap using component designator and actual pin number
+                                        // VERIFIED: DMPin.DM_PinNumber exists on IPin (same as INetItem.DM_PinNumber)
+                                        PinNumber := DMPin.DM_PinNumber;
+                                        NetName := PinNetMap.Values[Designator + '|' + PinNumber];
+                                        if NetName = '' then
+                                            NetName := '?';
+
+                                        // Add pin properties
+                                        // Use 'name' to match adapter expectations (altium_json.py line 292)
+                                        AddJSONProperty(PinProps, 'name', PinNumber);
+                                        AddJSONProperty(PinProps, 'net', NetName);
+
+                                        PinsArray.Add(BuildJSONObject(PinProps, 3));
+                                    finally
+                                        PinProps.Free;
+                                    end;
+                                end;
+                            end
+                            // VERIFIED: DM_SubParts for multipart (from FindUnmatchedPorts.pas line 606, 607)
+                            else if (DMComp.DM_SubPartCount > 1) then
+                            begin
+                                for PartIdx := 0 to DMComp.DM_SubPartCount - 1 do
+                                begin
+                                    DMPart := DMComp.DM_SubParts(PartIdx);
+                                    // VERIFIED: DMPart.DM_PinCount (from FindUnmatchedPorts.pas line 607)
+                                    for PinIdx := 0 to DMPart.DM_PinCount - 1 do
+                                    begin
+                                        DMPin := DMPart.DM_Pins(PinIdx);
+
+                                        PinProps := TStringList.Create;
+                                        try
+                                            // Look up net name from PinNetMap using component designator and actual pin number
+                                            // VERIFIED: DMPin.DM_PinNumber exists on IPin
+                                            PinNumber := DMPin.DM_PinNumber;
+                                            NetName := PinNetMap.Values[Designator + '|' + PinNumber];
+                                            if NetName = '' then
+                                                NetName := '?';
+
+                                            if (NetName <> '?') then
+                                            begin
+                                                // Use 'name' to match adapter expectations (altium_json.py line 292)
+                                                AddJSONProperty(PinProps, 'name', PinNumber);
+                                                AddJSONProperty(PinProps, 'net', NetName);
+
+                                                PinsArray.Add(BuildJSONObject(PinProps, 3));
+                                            end;
+                                        finally
+                                            PinProps.Free;
+                                        end;
+                                    end;
+                                end;
+                            end;
+
+                            CompProps.Add(BuildJSONArray(PinsArray, 'pins', 1));
+                        finally
+                            PinsArray.Free;
+                        end;
+
+                        // Add component to components array
+                        ComponentsArray.Add(BuildJSONObject(CompProps, 1));
+                    finally
+                        CompProps.Free;
+                    end;
+                End;
+            End;
+        End;
+
+        // Build nets array - VERIFIED approach from GetPinData.pas
+        NetsArray := TStringList.Create;
+        try
+            // VERIFIED: DM_LogicalDocumentCount, DM_LogicalDocuments (GetPinData.pas line 109, 111)
+            For i := 0 to Project.DM_LogicalDocumentCount - 1 Do
+            Begin
+                Doc := Project.DM_LogicalDocuments(i);
+
+                // VERIFIED: DM_NetCount and DM_Nets (GetPinData.pas line 114, 116)
+                for j := 0 to Doc.DM_NetCount - 1 do
+                begin
+                    Net := Doc.DM_Nets(j);
+
+                    NetProps := TStringList.Create;
+                    try
+                        // Get net name from first pin in net (GetPinData.pas line 121, 65)
+                        NetName := '';
+                        if Net.DM_PinCount > 0 then
+                        begin
+                            NetPin := Net.DM_Pins(0);
+                            // VERIFIED: DM_NetName on INetItem (GetPinData.pas line 65)
+                            NetName := NetPin.DM_NetName;
+                        end;
+
+                        AddJSONProperty(NetProps, 'name', NetName);
+                        // VERIFIED: DM_PinCount (GetPinData.pas line 119)
+                        AddJSONInteger(NetProps, 'pin_count', Net.DM_PinCount);
+
+                        NetsArray.Add(BuildJSONObject(NetProps, 1));
+                    finally
+                        NetProps.Free;
+                    end;
+                end;
+            End;
+
+            // Build final JSON structure
+            ResultProps := TStringList.Create;
+            try
+                ResultProps.Add(BuildJSONArray(ComponentsArray, 'components', 0));
+                ResultProps.Add(',');
+                ResultProps.Add(BuildJSONArray(NetsArray, 'nets', 0));
+
+                OutputLines := TStringList.Create;
+                try
+                    OutputLines.Add('{');
+                    for i := 0 to ResultProps.Count - 1 do
+                        OutputLines.Add(ResultProps[i]);
+                    OutputLines.Add('}');
+
+                    Result := WriteJSONToFile(OutputLines, ROOT_DIR+'temp_whole_design.json');
+                finally
+                    OutputLines.Free;
+                end;
+            finally
+                ResultProps.Free;
+            end;
+        finally
+            NetsArray.Free;
+        end;
+
+    finally
+        ComponentsArray.Free;
+        PinNetMap.Free;
+    end;
+end;
+
 
 
 
@@ -7027,6 +7283,8 @@ begin
             Result := GetSchematicComponentsWithParameters(ROOT_DIR);
         'check_schematic_pcb_sync':
             Result := CheckSchematicPCBSync(ROOT_DIR);
+        'get_whole_design_json':
+            Result := GetWholeDesignJSON(ROOT_DIR);
         'get_pcb_layers':
             Result := GetPCBLayers(ROOT_DIR);
         'get_board_outline':
