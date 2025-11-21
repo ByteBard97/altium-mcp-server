@@ -4112,14 +4112,7 @@ begin
         begin
             Seg := Board.BoardOutline.Segments[i];
 
-            // Convert from internal units to mils
-            X := CoordToMils(Seg.vx - Board.XOrigin);
-            Y := CoordToMils(Seg.vy - Board.YOrigin);
-
-            // Add vertex point as JSON array [x, y]
-            PointsArray.Add('[' + FloatToStr(X) + ',' + FloatToStr(Y) + ']');
-
-            // For arc segments, add interpolated points for smooth curves
+            // For arc segments, add interpolated points BEFORE the endpoint
             if Seg.Kind = ePolySegmentArc then
             begin
                 // Extract arc properties and convert to mils
@@ -4138,7 +4131,7 @@ begin
 
                 AngleStep := (EndAngle - StartAngle) / NumSteps;
 
-                // Generate interpolated points along the arc
+                // Generate interpolated points along the arc (excluding endpoints)
                 for j := 1 to NumSteps - 1 do
                 begin
                     CurrentAngle := StartAngle + (j * AngleStep);
@@ -4151,6 +4144,13 @@ begin
                     PointsArray.Add('[' + FloatToStr(ArcX) + ',' + FloatToStr(ArcY) + ']');
                 end;
             end;
+
+            // Convert endpoint from internal units to mils
+            X := CoordToMils(Seg.vx - Board.XOrigin);
+            Y := CoordToMils(Seg.vy - Board.YOrigin);
+
+            // Add vertex endpoint as JSON array [x, y]
+            PointsArray.Add('[' + FloatToStr(X) + ',' + FloatToStr(Y) + ']');
         end;
 
         // Build and return the JSON array directly

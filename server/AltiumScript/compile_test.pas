@@ -4081,9 +4081,20 @@ function GetBoardOutline(ROOT_DIR: String): String;
 var
     Board          : IPCB_Board;
     PointsArray    : TStringList;
-    i              : Integer;
+    i, j           : Integer;
     X, Y           : Double;
+    Seg            : TPolySegment;
+    CenterX, CenterY : Double;
+    Radius         : Double;
+    StartAngle, EndAngle : Double;
+    CurrentAngle   : Double;
+    AngleStep      : Double;
+    NumSteps       : Integer;
+    ArcX, ArcY     : Double;
+    PI             : Double;
 begin
+    PI := 3.14159265358979323846;
+
     // Retrieve the current board
     Board := GetPCBServer.GetCurrentPCBBoard;
     if (Board = nil) then
@@ -4104,21 +4115,47 @@ begin
         // Step through each vertex of the Board Outline
         for i := 0 to Board.BoardOutline.PointCount - 1 do
         begin
-            // Convert from internal units to mils
-            X := CoordToMils(Board.BoardOutline.Segments[i].vx - Board.XOrigin);
-            Y := CoordToMils(Board.BoardOutline.Segments[i].vy - Board.YOrigin);
+            Seg := Board.BoardOutline.Segments[i];
 
-            // Add as JSON array [x, y]
-            PointsArray.Add('[' + FloatToStr(X) + ',' + FloatToStr(Y) + ']');
-
-            // For arc segments, add additional interpolated points for smooth curves
-            // This approximates the arc with multiple line segments
-            if Board.BoardOutline.Segments[i].Kind = ePolySegmentArc then
+            // For arc segments, add interpolated points BEFORE the endpoint
+            if Seg.Kind = ePolySegmentArc then
             begin
-                // Add 8 interpolated points along the arc for smooth rendering
-                // (In a full implementation, you'd calculate actual arc points)
-                // For now, this ensures arcs are included with their endpoints
+                // Extract arc properties and convert to mils
+                CenterX := CoordToMils(Seg.cx - Board.XOrigin);
+                CenterY := CoordToMils(Seg.cy - Board.YOrigin);
+                Radius := CoordToMils(Seg.Radius);
+                StartAngle := Seg.Angle1;
+                EndAngle := Seg.Angle2;
+
+                // Calculate number of steps for smooth arc (16 points)
+                NumSteps := 16;
+
+                // Handle angle wrapping (e.g., 270 to 0 degrees)
+                if EndAngle < StartAngle then
+                    EndAngle := EndAngle + 360;
+
+                AngleStep := (EndAngle - StartAngle) / NumSteps;
+
+                // Generate interpolated points along the arc (excluding endpoints)
+                for j := 1 to NumSteps - 1 do
+                begin
+                    CurrentAngle := StartAngle + (j * AngleStep);
+
+                    // Convert angle to radians and calculate point on arc
+                    ArcX := CenterX + Radius * Cos(CurrentAngle * PI / 180);
+                    ArcY := CenterY + Radius * Sin(CurrentAngle * PI / 180);
+
+                    // Add interpolated point
+                    PointsArray.Add('[' + FloatToStr(ArcX) + ',' + FloatToStr(ArcY) + ']');
+                end;
             end;
+
+            // Convert endpoint from internal units to mils
+            X := CoordToMils(Seg.vx - Board.XOrigin);
+            Y := CoordToMils(Seg.vy - Board.YOrigin);
+
+            // Add vertex endpoint as JSON array [x, y]
+            PointsArray.Add('[' + FloatToStr(X) + ',' + FloatToStr(Y) + ']');
         end;
 
         // Build and return the JSON array directly

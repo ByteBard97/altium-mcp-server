@@ -117,3 +117,39 @@ def register_board_tools(mcp: "FastMCP", altium_bridge: "AltiumBridge"):
             return json.dumps({"success": False, "error": f"Failed to add board text: {response.error}"})
 
         return json.dumps({"success": True, "data": response.data}, indent=2)
+
+    @mcp.tool()
+    async def get_board_outline() -> str:
+        """
+        Get the PCB board outline polygon coordinates
+
+        Returns the board outline as an array of [x, y] coordinate pairs in mils.
+        The outline is extracted from the actual board outline object in Altium,
+        including support for arcs (approximated as line segments).
+
+        Useful for:
+        - Understanding actual board shape and dimensions
+        - Calculating board area
+        - Exporting board outline to other tools
+        - Verifying board outline matches mechanical requirements
+        - Visualizing board shape
+
+        Returns:
+            JSON array of coordinate pairs: [[x1, y1], [x2, y2], ...]
+            Coordinates are in mils relative to board origin
+
+        Example output:
+            [
+                [0, 0],
+                [1000, 0],
+                [1000, 800],
+                [0, 800]
+            ]
+        """
+        response = await altium_bridge.call_script("get_board_outline", {})
+
+        if not response.success:
+            return json.dumps({"success": False, "error": f"Failed to get board outline: {response.error}"})
+
+        # Response.data is already the array of coordinate pairs
+        return json.dumps(response.data, indent=2)
