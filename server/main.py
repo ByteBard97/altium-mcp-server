@@ -29,7 +29,8 @@ from tools import (
     register_library_tools,
     register_analysis_tools,
     register_board_tools,
-    register_routing_tools
+    register_routing_tools,
+    register_distributor_tools
 )
 from prompts import register_workflow_prompts
 
@@ -79,6 +80,8 @@ register_library_tools(mcp, altium_bridge)
 register_analysis_tools(mcp, altium_bridge)
 register_board_tools(mcp, altium_bridge)
 register_routing_tools(mcp, altium_bridge)
+logger.info("Registering distributor and component intelligence tools...")
+register_distributor_tools(mcp, altium_bridge)
 
 # ============================================================================
 # REGISTER PROMPTS - Guided workflows

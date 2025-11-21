@@ -33,3 +33,9 @@ nul
 # Virtual environments
 .venv
 /scripts-libraries
+
+# Environment variables and secrets
+.env
+server/.env
+*.env
+!*.env.example

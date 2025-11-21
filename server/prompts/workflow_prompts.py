@@ -129,3 +129,75 @@ I'll provide a summary of:
 Let me start by retrieving your net list..."""
             }
         ]
+
+    @mcp.prompt()
+    async def validate_bom_workflow(quantity: int = 1) -> list[dict]:
+        """
+        Comprehensive BOM validation and optimization workflow.
+
+        Args:
+            quantity: Production quantity for cost analysis (default: 1)
+        """
+        return [
+            {
+                "type": "text",
+                "text": f"""I'll guide you through a comprehensive BOM validation and optimization process.
+
+**Step 1: Component Availability Check**
+First, I'll check the availability of all components in your design:
+- Query distributor APIs (DigiKey, Mouser, LCSC, Arrow)
+- Identify in-stock vs out-of-stock components
+- Get current lead times
+- Flag components with limited availability
+
+Let me call `check_component_availability()` for all components at quantity {quantity}...
+
+**Step 2: Obsolescence Detection**
+Next, I'll scan for End-of-Life (EOL) and obsolete components:
+- Check lifecycle status for all parts
+- Identify NRND (Not Recommended for New Design) components
+- Detect parts at risk of discontinuation
+- Calculate supply chain risk score
+
+I'll use `detect_obsolete_components()` to analyze lifecycle status...
+
+**Step 3: Find Alternatives for Problem Components**
+For any out-of-stock or obsolete components, I'll suggest alternatives:
+- Search for pin-compatible replacements
+- Compare electrical specifications
+- Evaluate footprint compatibility
+- Rank by price and availability
+
+Using `suggest_component_alternatives()` for each problematic component...
+
+**Step 4: Cost Optimization Analysis**
+I'll analyze your BOM for cost reduction opportunities:
+- Identify high-cost components (>20% of total BOM cost)
+- Find cheaper alternatives that meet specifications
+- Analyze price breaks at different quantities
+- Calculate potential savings
+
+Running `analyze_bom_cost_optimization(quantity={quantity})` to find savings...
+
+**Step 5: Generate Enhanced BOM**
+Finally, I'll export an enhanced BOM with:
+- Current pricing at quantity {quantity}
+- Real-time availability status
+- Alternative component suggestions
+- Lifecycle status for each part
+- Total cost breakdown
+- Procurement recommendations
+
+Calling `export_bom_with_pricing()` to generate the final report...
+
+**Expected Results:**
+- ✅ Complete availability report
+- ✅ Obsolescence risk assessment
+- ✅ Alternative components for problematic parts
+- ✅ Cost optimization recommendations
+- ✅ Production-ready BOM with pricing
+
+**Ready to begin?**
+I'll start with the component availability check. This will take a moment as I query distributor databases..."""
+            }
+        ]

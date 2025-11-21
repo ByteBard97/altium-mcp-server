@@ -215,8 +215,13 @@ python-dotenv==1.0.1 \
     --hash=sha256:e324ee90a023d808f1959c46bcbc04446a10ced277783dc6ee09987c37ec10ca \
     --hash=sha256:f7b63ef50f1b690dddf550d03497b66d609393b40b564ed0d674909a68ebf16a
     # via
+    #   altiummcp
     #   mcp
     #   pydantic-settings
+gql[all]==3.5.0 \
+    --hash=sha256:585a5387f2138b25e47c1e2a5e9c2d9e55d39d0f7d08fcaf1c919c34b18c2591 \
+    --hash=sha256:9ae2e05f62535d4c4e75fd0e6fce2d2c26c34fae26a13d50ecd6000aabbd2463
+    # via altiummcp
 pywin32==310 \
     --hash=sha256:126298077a9d7c95c53823934f000599f66ec9296b09167810eb24875f32689c \
     --hash=sha256:19ec5fc9b1d51c4350be7bb00760ffce46e6c95eaf2f0b2f1150657b1a43c582 \

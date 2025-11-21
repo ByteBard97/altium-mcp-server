@@ -3,6 +3,8 @@
 TLDR: Use Claude to control or ask questions about your Altium project.
 This is a Model Context Protocol (MCP) server that provides an interface to interact with Altium Designer through Python. The server allows for querying and manipulation of PCB designs programmatically.
 
+**NEW: Distributor Integration** Check component availability, get real-time pricing, find alternatives, and validate your BOM using Nexar API integration. [Setup Guide](docs/API_SETUP_GUIDE.md) | [Features](docs/DISTRIBUTOR_INTEGRATION.md) | [Workflows](docs/BOM_VALIDATION_WORKFLOW.md)
+
 **NEW in Phase 5:** Board initialization and routing tools! Set board size, add outlines and mounting holes, route traces, place vias, and create copper pours. See Board & Routing Tools section below.
 
 **NEW in Phase 4:** Component placement has been completely redesigned and now works reliably! See Component Operations section below.
@@ -10,6 +12,7 @@ This is a Model Context Protocol (MCP) server that provides an interface to inte
 **NEW in Phase 2:** Project management and library search tools! Create projects, search components across libraries, and manage your workflow. See Project & Library Management section below.
 
 ## Example commands
+- **Distributor integration:** "Check component availability for my BOM" | "Find alternatives for U3" | "What's the price for 100 units?"
 - Run all output jobs
 - Create a symbol for the part in the attached datasheet and use the currently open symbol as a reference example.
 - Create a schematic symbol from the attached MPM3650 switching regulator datasheet and make sure to strictly follow the symbol placement rules. (Note: Need to open a schematic library. Uses `C:\AltiumMCP\symbol_placement_rules.txt` description as pin placement rules. Please modify for your own preferences.)
@@ -96,6 +99,39 @@ When launching claude for the first time, the server will automatically try to l
 ## Available Tools
 
 The server provides several tools to interact with Altium Designer:
+
+### Distributor Integration (NEW!)
+Real-time component availability, pricing, and BOM validation powered by Nexar API.
+
+**Quick Start:** [API Setup Guide](docs/API_SETUP_GUIDE.md) - Get your free Nexar API keys in 5 minutes!
+
+**Available Tools:**
+- `check_component_availability`: Check stock levels across multiple distributors
+- `get_component_pricing`: Get current pricing with quantity breaks
+- `find_component_alternatives`: Find drop-in replacements for unavailable parts
+- `validate_bom`: Comprehensive BOM validation for production readiness
+- `search_distributor_parts`: Search for components by specifications
+
+**Example Usage:**
+```
+"Check availability for all components in my BOM"
+"What's the price for 100 units of manufacturer part LM358N?"
+"Component U5 is out of stock. Find me alternatives."
+"Validate my BOM for a production run of 50 boards"
+"Find 0805 10k resistors with 1% tolerance in stock"
+```
+
+**Key Features:**
+- Real-time stock levels from Digi-Key, Mouser, Newark, Arrow, and more
+- Quantity break pricing for cost optimization
+- Intelligent alternative part recommendations
+- Lifecycle and obsolescence warnings
+- Lead time tracking for production planning
+
+**Learn More:**
+- [Complete Feature Guide](docs/DISTRIBUTOR_INTEGRATION.md)
+- [BOM Validation Workflows](docs/BOM_VALIDATION_WORKFLOW.md)
+- [Troubleshooting](docs/DISTRIBUTOR_INTEGRATION.md#troubleshooting)
 
 ### Output Jobs
 - `get_output_job_containers`: Using currently open .OutJob file, reads all available output containers

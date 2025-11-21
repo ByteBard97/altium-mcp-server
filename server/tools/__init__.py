@@ -14,6 +14,7 @@ from .library_tools import register_library_tools
 from .analysis_tools import register_analysis_tools
 from .board_tools import register_board_tools
 from .routing_tools import register_routing_tools
+from .distributor_tools import register_distributor_tools
 
 __all__ = [
     'register_component_tools',
@@ -27,5 +28,6 @@ __all__ = [
     'register_library_tools',
     'register_analysis_tools',
     'register_board_tools',
-    'register_routing_tools'
+    'register_routing_tools',
+    'register_distributor_tools'
 ]
