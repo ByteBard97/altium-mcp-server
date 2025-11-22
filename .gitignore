@@ -40,8 +40,16 @@ server/.env
 *.env
 !*.env.example
 
-# ChromaDB database files
-server/chroma_db/*.sqlite3
-server/chroma_db/*.sqlite3-*
-chroma_db/*.sqlite3
-chroma_db/*.sqlite3-*
+# ChromaDB database files (keep directories, ignore contents)
+server/chroma_db/
+chroma_db/
+docs/api/
+
+# Test outputs (keep test scripts in tests/ directory)
+tests/outputs/*.txt
+tests/outputs/*.json
+tests/outputs/*.csv
+
+# Temporary/cleanup files
+cleanup.bat
+cleanup_plan.md
