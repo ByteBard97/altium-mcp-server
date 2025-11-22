@@ -109,7 +109,7 @@ def register_api_search_tools(mcp: "FastMCP"):
         query: str,
         n_results: int = 10,
         filter_category: Optional[str] = None
-    ) -> str:
+    ) -> Dict:
         """
         Search Altium DelphiScript API using semantic search
 
@@ -193,34 +193,34 @@ def register_api_search_tools(mcp: "FastMCP"):
 
                     formatted_results.append(result_entry)
 
-            result_json = json.dumps({
+            result_dict = {
                 'query': query,
                 'num_results': len(formatted_results),
                 'results': formatted_results
-            }, indent=2)
+            }
 
             elapsed = time.time() - tool_start
             logger.info(f"[TOOL] search_delphiscript_api completed successfully in {elapsed:.2f}s")
-            return result_json
+            return result_dict
 
         except TimeoutError as e:
             elapsed = time.time() - tool_start
             logger.error(f"[TOOL] search_delphiscript_api timed out after {elapsed:.2f}s: {e}")
-            return json.dumps({
+            return {
                 'error': str(e),
                 'query': query,
                 'suggestion': 'The database operation timed out. Check if ChromaDB is properly initialized.'
-            }, indent=2)
+            }
         except Exception as e:
             elapsed = time.time() - tool_start
             logger.error(f"[TOOL] search_delphiscript_api failed after {elapsed:.2f}s: {e}", exc_info=True)
-            return json.dumps({
+            return {
                 'error': str(e),
                 'query': query
-            }, indent=2)
+            }
 
     @mcp.tool()
-    async def get_api_type_details(type_name: str) -> str:
+    async def get_api_type_details(type_name: str) -> Dict:
         """
         Get detailed information about a specific Altium API type
 
@@ -283,11 +283,11 @@ def register_api_search_tools(mcp: "FastMCP"):
                             category = meta.get('category', 'unknown')
 
             if not methods and not properties:
-                return json.dumps({
+                return {
                     'error': f'Type "{type_name}" not found in API database',
                     'type_name': type_name,
                     'suggestion': 'Try searching for it with search_delphiscript_api first'
-                }, indent=2)
+                }
 
             type_info = {
                 'type_name': type_name,
@@ -303,22 +303,22 @@ def register_api_search_tools(mcp: "FastMCP"):
             if len(properties) > 50:
                 type_info['properties_truncated'] = True
 
-            return json.dumps(type_info, indent=2)
+            return type_info
 
         except TimeoutError as e:
-            return json.dumps({
+            return {
                 'error': str(e),
                 'type_name': type_name,
                 'suggestion': 'The database operation timed out. Check if ChromaDB is properly initialized.'
-            }, indent=2)
+            }
         except Exception as e:
-            return json.dumps({
+            return {
                 'error': str(e),
                 'type_name': type_name
-            }, indent=2)
+            }
 
     @mcp.tool()
-    async def list_delphi_stdlib_functions() -> str:
+    async def list_delphi_stdlib_functions() -> Dict:
         """
         List all Delphi standard library built-in functions
 
@@ -375,17 +375,17 @@ def register_api_search_tools(mcp: "FastMCP"):
 
             total = sum(len(funcs) for funcs in functions_by_category.values())
 
-            return json.dumps({
+            return {
                 'total_functions': total,
                 'categories': functions_by_category
-            }, indent=2)
+            }
 
         except TimeoutError as e:
-            return json.dumps({
+            return {
                 'error': str(e),
                 'suggestion': 'The database operation timed out. Check if ChromaDB is properly initialized.'
-            }, indent=2)
+            }
         except Exception as e:
-            return json.dumps({
+            return {
                 'error': str(e)
-            }, indent=2)
+            }
