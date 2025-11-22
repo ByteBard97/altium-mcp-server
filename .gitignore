@@ -39,3 +39,9 @@ nul
 server/.env
 *.env
 !*.env.example
+
+# ChromaDB database files
+server/chroma_db/*.sqlite3
+server/chroma_db/*.sqlite3-*
+chroma_db/*.sqlite3
+chroma_db/*.sqlite3-*
